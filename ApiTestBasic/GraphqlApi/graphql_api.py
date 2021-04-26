@@ -1,5 +1,6 @@
 from python_utils.formatters import camel_to_underscore
 from sgqlc.operation import Operation
+from .decorator import Decorator
 
 
 class Register(type):
@@ -60,12 +61,19 @@ class GraphqlApi(metaclass=Register):
             return getattr(self.old_result, item[4:])
         return getattr(self.result, item)
 
+    @Decorator.set_query()
+    def run(self, *args, **kwargs):
+        self.api_op(*args, **kwargs)
+
 
 class EasyResult(object):
     __slots__ = ["obj"]
 
     def __init__(self, obj):
         self.obj = obj
+
+    def __len__(self):
+        return len(self.obj)
 
     def __getattr__(self, item):
         if isinstance(self.obj, list):
