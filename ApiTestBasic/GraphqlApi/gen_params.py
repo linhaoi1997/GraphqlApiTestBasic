@@ -34,6 +34,11 @@ class EasyDict(dict):
         for arg in args:
             self.pop(arg)
 
+    def stay(self, *args):
+        for i in list(self.keys()):
+            if i not in args:
+                self.pop(i)
+
 
 class ParamType:
     __slots__ = ("is_required", "is_list", "type_", "in_list_required")

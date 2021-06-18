@@ -37,7 +37,7 @@ class BaseUser(object):
             record(pformat(data), "返回的结果")
             if data.get("errors"):
                 raise SendRequestError("\n op  %s get error %s" % (op, data.get("errors")))
-            return op + data
+            return data
 
     def update_headers(self, **kwargs):
         for key in kwargs.keys():
@@ -58,7 +58,7 @@ class BaseUser(object):
         variables = {"input": {"account": account, "password": password}}
         op = Operation(self.mutation)
         op.login(**variables)
-        token = self.f("login", op).login.token
+        token = self.f("login", op)["data"]["login"]["token"]
         self.update_token(token)
 
     def login(self):
@@ -89,5 +89,5 @@ class Users:
                 return user.get("client")
 
 
-class SendRequestError(Exception):
+class SendRequestError(AssertionError):
     pass

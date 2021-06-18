@@ -31,6 +31,7 @@ class GraphqlApi(metaclass=Register):
         self.camel_name = camel_to_underscore(self.api.name)
         self.sgqlc_schema = self.api.container
         self.op = self.new_operation()
+        self.data = None
         self.result = None
         self.old_result = None
 
@@ -52,7 +53,8 @@ class GraphqlApi(metaclass=Register):
     def f(self, op):
         self.flag = True
         self.old_result = self.result
-        self.result = EasyResult(getattr(self.user.f(self.api_name, op), self.camel_name))
+        self.data = self.user.f(self.api_name, op)
+        self.result = EasyResult(getattr(op + self.data, self.camel_name))
         return self
 
     # get result
