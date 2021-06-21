@@ -99,6 +99,8 @@ class EasyResult(object):
                         flag = False
                         break
             return flag
+        elif isinstance(other, int):
+            return str(self.obj) == str(other)
 
         return self.obj == other
 
