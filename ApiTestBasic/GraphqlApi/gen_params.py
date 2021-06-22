@@ -28,6 +28,8 @@ class EasyDict(dict):
         return self.get(handle_(item))
 
     def __setattr__(self, key, value):
+        if hasattr(value, "obj"):
+            value = value.obj
         self[handle_(key)] = value
 
     def pop_many(self, *args):
