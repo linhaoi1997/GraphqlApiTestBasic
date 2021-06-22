@@ -81,7 +81,11 @@ class EasyResult(object):
         if isinstance(self.obj, list):
             return EasyResult([getattr(i, item) for i in self.obj])
         else:
-            return EasyResult(getattr(self.obj, item))
+            result = EasyResult(getattr(self.obj, item))
+            if isinstance(result.obj, str) or isinstance(result.obj, int) or isinstance(result.obj, float):
+                return result.obj
+            else:
+                return result
 
     def __getitem__(self, item):
         return EasyResult(self.obj[item])
@@ -106,6 +110,9 @@ class EasyResult(object):
 
     def __str__(self):
         return str(self.obj)
+
+    def __repr__(self):
+        return self.__str__()
 
     @property
     def value(self):
