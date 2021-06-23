@@ -83,6 +83,12 @@ class GraphqlOperationAPi(GraphqlApi):
     def run_return_all(self, **kwargs):
         self.manual_run_return_all(**self.variables)
 
+    def run_part(self, **kwargs):
+        self.variables.input.stay(list(kwargs.keys()))
+        for key, value in kwargs.items():
+            setattr(self.variables.input, key, value)
+        self.manual_run(**self.variables)
+
 
 class GraphqlUpdateAPi(GraphqlOperationAPi):
 
