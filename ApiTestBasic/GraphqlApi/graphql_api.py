@@ -75,6 +75,11 @@ class EasyResult(object):
         self.obj = obj
 
     def __len__(self):
+        if isinstance(self.obj, bool):
+            if self.obj is True:
+                return 1
+            else:
+                return 0
         return len(self.obj)
 
     def __getattr__(self, item):
