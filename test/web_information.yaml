@@ -1,0 +1,67 @@
+url: https://test.teletraan.io/graphql/
+#platform_url: http://192.168.1.5:8200/graphql/
+#url: https://test.teletraan.io/graphql/
+
+
+users:
+  admin_user:
+    login:
+      account: 'admin'
+      passpord: 'teletraan'
+
+  test_admin_user:
+    login:
+      account: 'test_account'
+      passpord: 'JSNykVEDuD8K'
+
+  sleemon_admin_user:
+    login:
+      account: 'sleemon'
+      passpord: 'sleemon'
+
+  # 用于测试eam权限的人员
+  report_user:
+    login:
+      account: 'faqiren'
+      passpord: '123456'
+
+  audit_user:
+    login:
+      account: 'shenheren'
+      passpord: '123456'
+
+  feed_back_user:
+    login:
+      account: 'fankuiren'
+      passpord: '123456'
+
+  other_user:
+    login:
+      account: 'chakanren'
+      passpord: '123456'
+
+  see_all_user:
+    login:
+      account: 'seeall'
+      passpord: '123456'
+
+  standby_user:
+    login:
+      account: 'standby'
+      passpord: '123456'
+
+  all_permission_user:
+    login:
+      account: 'all_permission'
+      passpord: '123456'
+
+  unnecessary_user:
+    login:
+      account: 'unnecessary_user'
+      passpord: '123456'
+
+  # 用于测试eam权限的人员
+  t_test_normal_user:
+    login:
+      account: 't_test_normal_user'
+      passpord: 'uB7j2ASbRcXB'
