@@ -1,0 +1,40 @@
+[[package]]
+name = "graphql-core"
+version = "3.1.5"
+description = "GraphQL implementation for Python, a port of GraphQL.js, the JavaScript reference implementation for GraphQL."
+category = "main"
+optional = false
+python-versions = ">=3.6,<4"
+
+[[package]]
+name = "sgqlc"
+version = "13.0"
+description = "Simple GraphQL Client"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+graphql-core = "*"
+
+[package.extras]
+requests = ["requests"]
+sphinx = ["sphinx"]
+websocket = ["websocket-client"]
+
+[metadata]
+lock-version = "1.1"
+python-versions = "^3.9"
+content-hash = "036df402924c4bc85a6793386615de625ec119ff38605f06458b70d34bf17c1f"
+
+[metadata.files]
+graphql-core = [
+    {file = "graphql-core-3.1.5.tar.gz", hash = "sha256:a755635d1d364a17e8d270347000722351aaa03f1ab7d280878aae82fc68b1f3"},
+    {file = "graphql_core-3.1.5-py3-none-any.whl", hash = "sha256:91d96ef0e86665777bb7115d3bbb6b0326f43dc7dbcdd60da5486a27a50cfb11"},
+]
+sgqlc = [
+    {file = "sgqlc-13.0-py3-none-any.whl", hash = "sha256:fe7760e77f2c53607e629e87f506344c75791408710c408c1eabc1d25a040761"},
+    {file = "sgqlc-13.0-py3.7.egg", hash = "sha256:9c79b4741c237026cffe5a93604c2bf2101031442808d243b30ab9fab09da946"},
+    {file = "sgqlc-13.0-py3.9.egg", hash = "sha256:12c3b50c87880fc9c4cc4f7e05ae79bb6ebbd6a1da63c33f8bb9230334f06f93"},
+    {file = "sgqlc-13.0.tar.gz", hash = "sha256:e2cd53148dce702f7b9eb9b4a9b1ec5b83efb1d21e3f117f0ce3a76b1721024b"},
+]
