@@ -1,3 +1,5 @@
+import logging
+
 from .graphql_api import GraphqlApi
 from .decorator import Decorator
 from .gen_params import GenParams
@@ -22,26 +24,31 @@ class GraphqlQueryListAPi(GraphqlApi):
     def query_ids(self, offset=0, limit=10, **kwargs):
         self.api_op(offset=offset, limit=limit, **kwargs)
 
-    def search(self, field_name, field_value):
-        try:
-            print(self.result)
-            data = self.result.data
-        except AttributeError:
-            raise Exception("result is not list: %s" % self.result)
-        for o in data:
-            if getattr(o, field_name) == field_value:
-                return o
-        raise FieldValueNotExistError("field %s not found value %s" % (field_name, field_value))
+    def filter_result(self, name: str, value):
+        result = self.result.data
+        names = name.split(".")
 
-    def search_return_dict(self, field_name, field_value):
-        return dict(self.search(field_name, field_value).__json_data__)
+        def judge(obj):
+            r = obj
+            for name_ in names:
+                r = getattr(r, name_)
+            return r == value
 
-    def assert_search_fail(self, field_name, field_value):
-        try:
-            result = self.search(field_name, field_value)
-            raise AssertionError("field %s should not found value %s,but it found" % (field_name, field_value))
-        except FieldValueNotExistError:
-            pass
+        return list(filter(judge, result))
+
+    def search_result(self, name: str, value):
+        search_list = self.result.data
+        if search_list and isinstance(search_list[0].obj, list):
+            new_list = []
+            for i in search_list:
+                new_list.extend(i)
+            search_list = new_list
+        result = self.filter_result(name, value)
+        if result:
+            logging.info(result, "筛选出的值")
+            return result[0]
+        else:
+            raise AssertionError(f"从 {result} 中没找到 {name} 字段为 {value} 的值")
 
     def normal_request(self):
         return self.query()
