@@ -1,4 +1,10 @@
 ### 使用步骤
+**0.安装**
+
+```shell
+pip install graphqlapiobject
+```
+
 
 **1. 根据schema快速生成graphql接口**
 
@@ -154,3 +160,5 @@ class GraphqlOperationAPiTest(GraphqlOperationAPi): ...  # 可以进行自动生
 
 class GraphqlQueryListAPiTest(GraphqlQueryListAPi): ...  # 查询列表数据，参数为limit，offset，filter，可以全量查询和查询想要查询的部分
 ```
+
+**PS:更多详细使用方法参考Test测试例子**
