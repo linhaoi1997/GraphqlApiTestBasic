@@ -4,10 +4,10 @@
 /ApiTestBasic.egg-info
 /build
 /dist
-/test
 test.py
 /venv_new
 .idea/
 pyproject.toml
 *.env
 *env
+config.py
