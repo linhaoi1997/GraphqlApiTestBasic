@@ -45,7 +45,7 @@ class TestGraphqlQuery:
     def setup_class(self):
         self.user = BaseUser(url, Mutation,
                              {"account": account, "password": password})
-        self.user_id = "5ba962f5-cb17-4663-9c71-23774d911f8"
+        self.user_id = "5ba962f5-cb17-4663-9c71-23774d911f8d"
 
     @allure.title("测试assert方法")
     def test1(self):
