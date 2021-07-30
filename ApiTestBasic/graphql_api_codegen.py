@@ -11,10 +11,8 @@ class GenCode:
     @classmethod
     def write_class(cls, type_, api):
         suffix, end = api.name.split("_")[0].lower(), api.name.split("_")[-1].lower()
-        if suffix in ("create", "delete"):
+        if suffix in ("create", "delete", "update"):
             return cls.__write_class(type_, api, "Ge.GraphqlOperationAPi")
-        elif suffix == "update":
-            return cls.__write_class(type_, api, "Ge.GraphqlUpdateAPi")
         elif end.endswith("s") or end == "list":
             return cls.__write_class(type_, api, "Ge.GraphqlQueryListAPi")
         else:

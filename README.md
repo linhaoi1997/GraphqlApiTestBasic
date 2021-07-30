@@ -36,7 +36,7 @@ class Query(sgqlc.types.Type):
 
 ```python
 from ApiTestBasic import GraphqlApi, Decorator, GenParams, GraphqlApiExtension
-from Schema.platform_schema import Query, platform_schema, Mutation
+from Schema.PlatformSchema.platform_schema import Query, platform_schema, Mutation
 from ApiTestBasic import BaseUser
 from sgqlc.operation import Operation
 
@@ -85,18 +85,23 @@ print(CreateThing(admin_user).create(name="name").result)
 **4. 发送参数和返回结果**
 
  （1）以eam为例，通过ApiTestBasic使用api object进行接口自动化测试可以写出这样的接口类，并进行调用
+
  ```python
 from ApiTestBasic import GraphqlApi, BaseUser
-from Schema.platform_schema import Query, platform_schema, Mutation
+from Schema.PlatformSchema.platform_schema import Query, platform_schema, Mutation
 
 user = BaseUser("https://test.teletraan.io/graphql/", Mutation, {"account": "admin", "password": "teletraan"})
+
 
 class Apps(GraphqlApi):
     api = Query.apps
 
+
 a = Apps(user)
 print(a.run().result)
-AppList(data=[App(id='2', name='***', code='jhdv', key='c10c7cd3-27c7-4666-92b6-46b426e01493', description=None, url='/app/jhdv', is_admin=None), 1], total_count=32)
+AppList(data=[
+    App(id='2', name='***', code='jhdv', key='c10c7cd3-27c7-4666-92b6-46b426e01493', description=None, url='/app/jhdv',
+        is_admin=None), 1], total_count=32)
 ```
 （2）返回结果简单取值
 ```python
@@ -108,7 +113,7 @@ print(result.data.name)
 
 ```python
 from ApiTestBasic import GenParams
-from Schema.platform_schema import platform_schema, Query, Mutation
+from Schema.PlatformSchema.platform_schema import platform_schema, Query, Mutation
 
 gen = GenParams(platform_schema)
 var1 = gen.gen(Query.apps)

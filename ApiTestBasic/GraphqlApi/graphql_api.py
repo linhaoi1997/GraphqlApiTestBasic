@@ -1,124 +1,85 @@
 from python_utils.formatters import camel_to_underscore
 from sgqlc.operation import Operation
-from .decorator import Decorator
+from ..User.base_user import BaseUser
+import jmespath
+from hamcrest import assert_that
+from contextlib import contextmanager
+from collections import defaultdict
 
 
-class Register(type):
-    __register_api__ = {}
-
-    def __init__(cls, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if getattr(cls, "api"):
-            cls.__register_api__[args[0]] = cls
-
-    def __call__(cls, *args, **kwargs):
-        instance = super(Register, cls).__call__(*args, **kwargs)
-        setattr(instance, "register_api", cls.register_api)
-        return instance
-
-    @property
-    def register_api(cls):
-        return cls.__register_api__
-
-
-class GraphqlApi(metaclass=Register):
+class GraphqlApi(object):
+    """
+    期望使用的方式：
+    （1）调用set方法设置query，然后发送数据
+    （2）内置几个查询的query
+    """
     api = None
 
     def __init__(self, user):
+        if not isinstance(user, BaseUser):
+            raise AssertionError("传入的参数不是指定的User实例")
         self.user = user
-        self.flag = False
         self.api_name = self.api.graphql_name
+        # 接口的下滑线形式的名称，sgqlc会把接口定义的驼峰形式的名转化为下划线，这里对应上
         self.camel_name = camel_to_underscore(self.api.name)
-        self.sgqlc_schema = self.api.container
-        self.op = self.new_operation()
-        self.data = None
-        self.result = None
-        self.old_result = None
+        self.sgqlc_schema = self.api.container  # schema对象
+        self.op: Operation = Operation(self.sgqlc_schema)  # sgqlc的operation对象
+        self.api_op = getattr(self.op, self.camel_name)  # 一个graphql接口可以查询多个，这里每个接口只查询一个，为类变量api
+        self._query = defaultdict(list)  # 记录定义的query然后接口调用时执行
+        self.data = None  # 返回的原始数据
+        self.result = None  # 返回的sgqlc处理的数据
 
-    # create operation
-    def new_operation(self):
-        op = Operation(self.sgqlc_schema)
-        return op
+    def new_op(self):  # 每次发送接口重建一个operation，operation无法修改参数
+        self.op = Operation(self.sgqlc_schema)
+        self.api_op = getattr(self.op, self.camel_name)
+        return self.api_op
 
-    @property
-    def op(self):
-        return self._op
+    @contextmanager
+    def complex_op(self, name, *args, **kwargs):
+        """
+        高级graphql查询可以在第二层接口中写参数，并设定第二层query的参数，虽然公司业务暂时没用到，留个口子
+        example: issues = op.repository(owner=owner, name=name).issues(first=100)
+        """
+        tmp = self.api_op
+        self.api_op = getattr(self.api_op, name)(*args, **kwargs)
+        yield
+        self.api_op = tmp
 
-    @op.setter
-    def op(self, value):
-        self._op = value
-        self.api_op = getattr(self._op, self.camel_name)
-
-    # send requests
-    def f(self, op):
-        self.flag = True
-        self.old_result = self.result
-        self.data = self.user.f(self.api_name, op)
-        self.result = EasyResult(getattr(op + self.data, self.camel_name))
+    def set(self, path, *args, **kwargs):  # 记录设定的query
+        """
+        :param path: query的路径
+        :param args: 使用__fields__方法需要设定参数
+        :param kwargs: 使用__fields__方法需要设定参数
+        :return:
+        """
+        self._query[self.api_op].append((path, args, kwargs))
         return self
 
-    # get result
-    def __getattr__(self, item):
-        if item.startswith("old_"):
-            return getattr(self.old_result, item[4:])
-        return getattr(self.result, item)
+    q = set
 
-    @Decorator.set_query()
+    def f(self):  # send requests
+        self.data = self.user.f(self.api_name, self.op)
+        self.result = getattr(self.op + self.data, self.camel_name)
+        self._query = defaultdict(list)  # 重设query
+        self.new_op()  # 重设 operation
+        return self
+
     def run(self, *args, **kwargs):
-        self.api_op(*args, **kwargs)
+        def s(op, path, *q_args, **q_kwargs):
+            for i in path.split("."):
+                op = getattr(op, i)
+            op(*q_args, **q_kwargs)
 
+        self.api_op(*args, **kwargs)  # 给接口设定参数
+        for api_op, queries in self._query.items():
+            for query in queries:
+                s(api_op, query[0], *query[1], **query[2])
 
-class EasyResult(object):
-    __slots__ = ["obj"]
+        return self.f()
 
-    def __init__(self, obj):
-        self.obj = obj
+    def capture(self, path, options=None):  # 使用jmespath拿到返回数据的值
+        return jmespath.search(path, self.data, options=options)
 
-    def __len__(self):
-        if isinstance(self.obj, bool):
-            if self.obj is True:
-                return 1
-            else:
-                return 0
-        return len(self.obj)
-
-    def __getattr__(self, item):
-        if isinstance(self.obj, list):
-            return EasyResult([getattr(i, item) for i in self.obj])
-        else:
-            result = EasyResult(getattr(self.obj, item))
-            if isinstance(result.obj, str) or isinstance(result.obj, int) or isinstance(result.obj, float):
-                return result.obj
-            else:
-                return result
-
-    def __getitem__(self, item):
-        return EasyResult(self.obj[item])
-
-    def __eq__(self, other):
-        if isinstance(other, list):
-            flag = True
-            for i in other:
-                if i not in self.obj:
-                    flag = False
-                    break
-            if flag:
-                for i in self.obj:
-                    if i not in other:
-                        flag = False
-                        break
-            return flag
-        elif isinstance(other, int):
-            return str(self.obj) == str(other)
-
-        return self.obj == other
-
-    def __str__(self):
-        return str(self.obj)
-
-    def __repr__(self):
-        return self.__str__()
-
-    @property
-    def value(self):
-        return self.obj
+    def assert_that(self, matcher=None, reason=""):  # 使用hamcrest进行对结果的校验
+        assert_that(self, matcher, reason)
+        return self

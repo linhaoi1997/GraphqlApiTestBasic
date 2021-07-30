@@ -1,43 +1,8 @@
 import random
+from typing import Any, List
+
 from .tools import fake, create_timestamp
 import weakref
-
-
-# 重名情况
-def handle_(item):
-    if item.endswith("_"):
-        return item[:-1]
-    return item
-
-
-class EasyList(list):
-
-    def __getattr__(self, item):
-        return EasyList([i.get(handle_(item)) for i in self])
-
-    def __setattr__(self, key, value: list):
-        if not len(self) == len(value):
-            raise AssertionError("想要设置的列表长度不一样")
-        for num, i in enumerate(self):
-            i[handle_(key)] = value[num]
-
-
-class EasyDict(dict):
-
-    def __getattr__(self, item):
-        return self.get(handle_(item))
-
-    def __setattr__(self, key, value):
-        self[handle_(key)] = value
-
-    def pop_many(self, *args):
-        for arg in args:
-            self.pop(arg)
-
-    def stay(self, *args):
-        for i in list(self.keys()):
-            if i not in args:
-                self.pop(i)
 
 
 class ParamType:
@@ -52,13 +17,13 @@ class ParamType:
             self.handle(type_str)
 
     def handle(self, type_str):
-        if type_str.endswith("!"):
+        if type_str.endswith("!"):  # 必填
             self.is_required = True
             type_str = type_str[:-1]
-        if type_str.startswith("["):
+        if type_str.startswith("["):  # 列表
             self.is_list = True
             type_str = type_str[1:-1]
-            if type_str.endswith("!"):
+            if type_str.endswith("!"):  # 去掉列表之后可能还是必填
                 self.in_list_required = True
                 type_str = type_str[:-1]
         self.type_ = type_str
@@ -79,19 +44,82 @@ class Cached(type):
             return obj
 
 
+class ChangeParamsByPath:
+    @classmethod
+    def _handle_path(cls, path: str):
+        if path.endswith("]"):
+            index = 0
+            while path[index] != "[":
+                index += 1
+
+            return path[0:index], path[index + 1:-1] if path[index + 1:-1] == "*" else int(path[index + 1:-1])
+        else:
+            return path, None
+
+    @classmethod
+    def _change(cls, obj: dict, paths: List[str], value: Any):
+        path, index = cls._handle_path(paths[0])
+        if len(paths) == 1 and obj.get(path):  # 迭代终止条件
+            if index is None:
+                obj[path] = value
+            else:
+                if index == "*":
+                    for i in range(len(obj[path])):
+                        obj[path][i] = value
+                else:
+                    obj[path][index] = value
+        else:
+            if obj.get(path):
+                new_obj = obj.get(path)
+                if index is not None:  # 拿到的是列表
+                    if index == "*":
+                        for i in new_obj:
+                            cls._change(i, paths[1:], value)
+                    else:
+                        cls._change(new_obj[index], paths[1:], value)
+                else:
+                    cls._change(new_obj, paths[1:], value)
+            else:
+                for key, new_obj in obj.items():
+                    if isinstance(new_obj, list):
+                        for i in new_obj:
+                            cls._change(i, paths, value)
+                    elif isinstance(new_obj, dict):
+                        cls._change(new_obj, paths, value)
+
+    @classmethod
+    def change(cls, obj: dict, path: str, value: Any):
+        """
+        :param obj: 要修改的对象
+        :param path: 修改的path，将符合条件第一个path修改为对应的value，暂时期望支持
+            （1）正常path，'name',
+            （2）部分相对path 'input.name'
+            （3）批量修改列表中的path 'input.hlist[*].name'
+        :param value: 要修改的值
+        :return:
+        """
+        paths = path.split(".")
+        return cls._change(obj, paths, value)
+
+
 class GenParams(metaclass=Cached):
     def __init__(self, schema):
         self.schema = schema
+        self.result = None
+
+    def change(self, path: str, value: Any):
+        ChangeParamsByPath.change(self.result, path, value)
+        return self.result
 
     def gen(self, api, optional=False):
-        result = EasyDict()
+        self.result = {}
         for param in api.args.values():
-            result[param.name] = self.__gen(param, optional)
-        return result
+            self.result[param.name] = self.__gen(param, optional)
+        return self
 
     def __gen(self, param, optional):
         def handle(param_):
-            r = EasyDict()
+            r = {}
             for n in param_.__field_names__:
                 t = getattr(param_, n)
                 if optional and not ParamType(str(self.__type__(t))).is_required:
@@ -107,8 +135,8 @@ class GenParams(metaclass=Cached):
         param_type = ParamType(str(type_))
         if param_type.is_list:
             if hasattr(type_, "converter") and "String" in str(type_):
-                return EasyList([self._string(param) for i in range(3)])
-            return EasyList([self.__gen(getattr(self.schema, param_type.type_), optional) for i in range(3)])
+                return [self._string(param) for i in range(3)]
+            return [self.__gen(getattr(self.schema, param_type.type_), optional) for i in range(3)]
         elif hasattr(type_, "__field_names__"):
             result = handle(type_)
             return result
@@ -123,29 +151,36 @@ class GenParams(metaclass=Cached):
         try:
             return obj.type
         except AttributeError as e:
-            # print(e)
             return obj
 
-    def _int(self, param):
+    @staticmethod
+    def _int(param):
         return fake.random_int
 
-    def _float(self, param):
+    @staticmethod
+    def _float(param):
         return fake.pyfloat
 
-    def _string(self, param):
+    @staticmethod
+    def _string(param):
         return getattr(fake, param.name)
 
-    def _boolean(self, param):
+    @staticmethod
+    def _boolean(param):
         return random.choice([True, False])
 
-    def _id(self, param):
+    @staticmethod
+    def _id(param):
         return 1
 
-    def _timestamp(self, param):
+    @staticmethod
+    def _timestamp(param):
         return create_timestamp()
 
-    def _jsonstring(self, param):
+    @staticmethod
+    def _jsonstring(param):
         return "[]"
 
-    def _json(self, param):
+    @staticmethod
+    def _json(param):
         return {"json": "json"}

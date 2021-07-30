@@ -5,64 +5,17 @@ import logging
 import time
 
 
-class MyProvider(BaseProvider):
-    fake = Faker(['zh_CN'])
-
-    def code(self):
-        return self.fake.currency_code() + str(self.fake.random_int())
-
-    def model(self):
-        return self.fake.word() + self.fake.gou()
-
-    def title(self):
-        return self.fake.text(20)
-
-    def brief(self):
-        return self.fake.text(100)
-
-    def description(self):
-        return self.fake.text(500)
-
-    def content(self):
-        return self.fake.text(100)
-
-    def factory(self):
-        return random.choice(["测试工厂", "外星人工厂", "能量工厂"])
-
-    def category(self):
-        return random.choice(["生产设备", "公共类设备", "辅助设备"])
-
-    def purpose(self):
-        return random.choice(["生产", "辅助", "加压"])
-
-    def usingStatus(self):
-        return random.choice(["使用中", "废弃中", "加载中"])
-
-    def brand(self):
-        return random.choice(["喜临门", "外星人", "罗技", "雷蛇"])
-
-    def manufacturer(self):
-        return random.choice(["中国上海英格索兰压缩机", "外星人", "罗技", "雷蛇"])
-
-    def distributor(self):
-        return random.choice(["经销商1", "经销商2", "经销商3"])
-
-    def frequency(self):
-        return random.choice(["一天一次", "一月一次", "三月一次"])
-
-
 class MyFaker(object):
 
     def __init__(self, fake_map=None):
         # 如果要关联到已存在的规则使用fake_map
-        self.fake_map = {}
+        self.fake_map = {"phone": "phone_number"}
         self.fake = Faker()
-        self.fake.add_provider(MyProvider)
 
     def add_provider(self, provider: BaseProvider):
         self.fake.add_provider(provider)
 
-    def add_fake_map(self, pos=None, **kwargs):
+    def add_fake_map(self, pos: dict = None, **kwargs):
         if pos:
             self.fake_map.update(pos)
         self.fake_map.update(**kwargs)

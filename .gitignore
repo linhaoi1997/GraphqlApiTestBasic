@@ -9,3 +9,5 @@ test.py
 /venv_new
 .idea/
 pyproject.toml
+*.env
+*env

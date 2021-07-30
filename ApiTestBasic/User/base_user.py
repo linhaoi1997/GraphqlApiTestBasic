@@ -5,9 +5,11 @@ from sgqlc.operation import Operation
 from beeprint import pp
 from contextlib import contextmanager
 import allure
-import ssl
 
-ssl._create_default_https_context = ssl._create_unverified_context
+
+# import ssl
+
+# ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def pformat(strings):
@@ -93,23 +95,6 @@ class BaseUser(object):
         self.graphql_client.url = "?".join([tmp, name])
         yield
         self.graphql_client.url = tmp
-
-
-class Users:
-    def __init__(self, user_object, users_info):
-        self.user_object = user_object
-        self.users = []
-        for user_name in users_info.keys():
-            login = users_info[user_name].get("login")
-            user = {"name": user_name, "client": None, "login": login}
-            self.users.append(user)
-
-    def __getattr__(self, item):
-        for user in self.users:
-            if user.get("name") == item:
-                if not user.get("client"):
-                    user["client"] = self.user_object(user["login"])
-                return user.get("client")
 
 
 class SendRequestError(AssertionError):
