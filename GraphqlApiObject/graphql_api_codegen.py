@@ -35,7 +35,7 @@ class {title_api_name}({base_api}):
     @classmethod
     def write_import(cls, module_name, query_or_mutation):
         return '''\
-from ApiTestBasic import GraphqlApi, GraphqlApiExtension as Ge
+from GraphqlApiObject import GraphqlApi, GraphqlApiExtension as Ge
 from %s import %s
 
 

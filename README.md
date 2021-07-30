@@ -27,7 +27,7 @@ bash /Applications/Python*/Install\ Certificates.command
 import json
 import logging
 import allure
-from ApiTestBasic import BaseUser, GraphqlQueryListAPi, pformat
+from GraphqlApiObject import BaseUser, GraphqlQueryListAPi, pformat
 from Schema.PlatformSchema.platform_schema import Mutation, Query
 
 
@@ -65,7 +65,7 @@ class TestGraphqlQuery:
  ```python
 import allure
 import logging
-from ApiTestBasic import BaseUser, GraphqlOperationAPi
+from GraphqlApiObject import BaseUser, GraphqlOperationAPi
 from Schema.PlatformSchema.platform_schema import Mutation
 
 
@@ -105,7 +105,7 @@ import logging
 import allure
 import pytest
 
-from ApiTestBasic import BaseUser, GraphqlQueryListAPi
+from GraphqlApiObject import BaseUser, GraphqlQueryListAPi
 from Schema.PlatformSchema.platform_schema import Mutation, Query
 
 
@@ -140,9 +140,17 @@ class TestGraphqlQuery:
 **5. 根据业务总结有4种接口类型，可以看情况选择继承**
 
 ```python
-from ApiTestBasic import GraphqlApi, GraphqlOperationAPi, GraphqlQueryAPi, GraphqlQueryListAPi
-class GraphqlApiTest(GraphqlApi):... # 没有特殊处理的，可以直接使用发送接口
-class GraphqlQueryAPiTest(GraphqlQueryAPi):... # 查询单个资源的接口，参数只有id一个
-class GraphqlOperationAPiTest(GraphqlOperationAPi):... # 可以进行自动生成参数，对复杂参数可以继承这个接口类
-class GraphqlQueryListAPiTest(GraphqlQueryListAPi):... # 查询列表数据，参数为limit，offset，filter，可以全量查询和查询想要查询的部分
+from GraphqlApiObject import GraphqlApi, GraphqlOperationAPi, GraphqlQueryAPi, GraphqlQueryListAPi
+
+
+class GraphqlApiTest(GraphqlApi): ...  # 没有特殊处理的，可以直接使用发送接口
+
+
+class GraphqlQueryAPiTest(GraphqlQueryAPi): ...  # 查询单个资源的接口，参数只有id一个
+
+
+class GraphqlOperationAPiTest(GraphqlOperationAPi): ...  # 可以进行自动生成参数，对复杂参数可以继承这个接口类
+
+
+class GraphqlQueryListAPiTest(GraphqlQueryListAPi): ...  # 查询列表数据，参数为limit，offset，filter，可以全量查询和查询想要查询的部分
 ```

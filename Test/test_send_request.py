@@ -4,7 +4,7 @@ import logging
 import allure
 import pytest
 
-from ApiTestBasic import BaseUser, GraphqlQueryListAPi, pformat
+from GraphqlApiObject import BaseUser, GraphqlQueryListAPi, pformat
 from Schema.PlatformSchema.platform_schema import Mutation, Query
 from config import *
 

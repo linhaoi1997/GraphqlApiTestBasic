@@ -2,7 +2,7 @@ import logging
 
 import allure
 
-from ApiTestBasic import BaseUser, GraphqlQueryAPi, GraphqlOperationAPi, GraphqlQueryListAPi
+from GraphqlApiObject import BaseUser, GraphqlQueryAPi, GraphqlOperationAPi, GraphqlQueryListAPi
 from Schema.PlatformSchema.platform_schema import Mutation, Query
 from config import *
 

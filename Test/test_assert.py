@@ -3,7 +3,7 @@ from typing import Tuple
 
 import allure
 
-from ApiTestBasic import BaseUser, GraphqlQueryListAPi
+from GraphqlApiObject import BaseUser, GraphqlQueryListAPi
 from Schema.PlatformSchema.platform_schema import Mutation, Query
 from hamcrest import *
 

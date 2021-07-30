@@ -1,6 +1,6 @@
 import logging
 
-from ApiTestBasic.GraphqlApi.gen_params import GenParams
+from GraphqlApiObject.GraphqlApi.gen_params import GenParams
 
 from Schema.GitHubSchema.github_schema import Mutation, github_schema
 from jsonschema import validate, draft7_format_checker
