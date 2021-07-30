@@ -2,7 +2,7 @@
 **0.安装**
 
 ```shell
-pip install graphqlapiobject
+pip install graphqlapiobject # 需要python3.9
 ```
 
 
@@ -161,4 +161,4 @@ class GraphqlOperationAPiTest(GraphqlOperationAPi): ...  # 可以进行自动生
 class GraphqlQueryListAPiTest(GraphqlQueryListAPi): ...  # 查询列表数据，参数为limit，offset，filter，可以全量查询和查询想要查询的部分
 ```
 
-**PS:更多详细使用方法参考Test测试例子**
+**PS:更多详细使用方法参考Test/文件夹的测试例子**
