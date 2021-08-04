@@ -59,22 +59,30 @@ class ChangeParamsByPath:
     @classmethod
     def _change(cls, obj: dict, paths: List[str], value: Any):
         path, index = cls._handle_path(paths[0])
-        if len(paths) == 1 and obj.get(path):  # 迭代终止条件
+        if len(paths) == 1 and obj.get(path, "EOF") != "EOF":  # 迭代终止条件,目标值可能为None，所以自己定义一个值
             if index is None:
                 obj[path] = value
             else:
                 if index == "*":
-                    for i in range(len(obj[path])):
-                        obj[path][i] = value
+                    if isinstance(value, list):  # 想更换的参数也是列表
+                        for i in range(len(obj[path])):
+                            obj[path][i] = value[i]
+                    else:
+                        for i in range(len(obj[path])):
+                            obj[path][i] = value
                 else:
                     obj[path][index] = value
         else:
-            if obj.get(path):
+            if obj.get(path, "EOF") != "EOF":
                 new_obj = obj.get(path)
                 if index is not None:  # 拿到的是列表
                     if index == "*":
-                        for i in new_obj:
-                            cls._change(i, paths[1:], value)
+                        if isinstance(value, list):  # 想更换的参数也是列表
+                            for i in range(len(new_obj)):
+                                cls._change(new_obj[i], paths[1:], value[i])
+                        else:
+                            for i in new_obj:
+                                cls._change(i, paths[1:], value)
                     else:
                         cls._change(new_obj[index], paths[1:], value)
                 else:
@@ -117,6 +125,9 @@ class GenParams(metaclass=Cached):
             self.result[param.name] = self.__gen(param, optional)
         return self
 
+    def gen_part(self, param, optional=False):
+        return self.__gen(param, optional)
+
     def __gen(self, param, optional):
         def handle(param_):
             r = {}
@@ -155,11 +166,11 @@ class GenParams(metaclass=Cached):
 
     @staticmethod
     def _int(param):
-        return fake.random_int
+        return fake.fake.random_int(1, 100)
 
     @staticmethod
     def _float(param):
-        return fake.pyfloat
+        return fake.fake.random_int(1, 100)
 
     @staticmethod
     def _string(param):
@@ -183,4 +194,4 @@ class GenParams(metaclass=Cached):
 
     @staticmethod
     def _json(param):
-        return {"json": "json"}
+        return {}

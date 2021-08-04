@@ -8,7 +8,6 @@ from Schema.PlatformSchema.platform_schema import Mutation, Query
 from config import *
 
 
-
 class QueryUsers(GraphqlQueryListAPi):
     api = Query.users
 

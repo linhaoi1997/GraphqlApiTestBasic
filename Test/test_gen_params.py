@@ -128,3 +128,33 @@ class TestGenParams:
         data = GenParams(platform_schema).gen(Mutation.create_user).change("role", [{"id": 10}])
         logging.info(data)
         assert data["input"]["role"][0]["id"] == 10
+
+    @allure.title("改变参数，替换列表为列表")
+    def test_change_params8(self):
+        from Schema.PlatformSchema.platform_schema import platform_schema, Mutation
+        data = GenParams(platform_schema).gen(Mutation.create_user).change("role[*].id", [2, 3, 4])
+        logging.info(data)
+        assert data["input"]["role"][0]["id"] == 2
+        assert data["input"]["role"][1]["id"] == 3
+        assert data["input"]["role"][2]["id"] == 4
+
+    @allure.title("改变参数，替换列表为列表2")
+    def test_change_params8(self):
+        from Schema.PlatformSchema.platform_schema import platform_schema, Mutation
+        data = GenParams(platform_schema).gen(Mutation.create_user).change("role[*]", [2, 3, 4])
+        logging.info(data)
+        assert data["input"]["role"][0] == 2
+        assert data["input"]["role"][1] == 3
+        assert data["input"]["role"][2] == 4
+
+    @allure.title("改变参数")
+    def test_change_params9(self):
+        from Schema.PlatformSchema.platform_schema import platform_schema, Mutation
+        data = GenParams(platform_schema).gen(Mutation.set_erp_order_check_config).change("editable", True)
+        logging.info(data)
+        assert data["input"]["editable"] == True
+
+    def test(self):
+        from Schema.PlatformSchema.platform_schema import platform_schema, Mutation,ErpProductionTaskInput
+        data = GenParams(platform_schema).gen_part(ErpProductionTaskInput)
+        logging.info(data)
