@@ -1,5 +1,6 @@
 import logging
 import random
+from contextlib import contextmanager
 
 from .graphql_api import GraphqlApi
 from .gen_params import GenParams
@@ -11,6 +12,10 @@ class FieldValueNotExistError(Exception):
 
 class GraphqlQueryListAPi(GraphqlApi):
 
+    def __init__(self, user):
+        super().__init__(user)
+        self.id = None
+
     def query(self, offset=0, limit=10, **kwargs):
         return self.run(offset=offset, limit=limit, **kwargs)
 
@@ -20,6 +25,41 @@ class GraphqlQueryListAPi(GraphqlApi):
     def query_ids(self, offset=0, limit=10, **kwargs):
         return self.set("data.__fields__", "id").run(offset=offset, limit=limit, **kwargs)
 
+    @contextmanager
+    def find(self, field=None, value=None, **kwargs):
+        """
+        :param field: field必须是返回数据data下的第一个字段，不支持更深层的
+        :param value: 对应的值
+        :param kwargs: 发送接口的filter或者其他参数
+        :return:
+        """
+        offset = 0
+        fields = [field] if field else []  # 需要额外查询一个字段判断
+
+        def q(o):
+            return self.set("data.__fields__", "id", *fields).set("total_count") \
+                .query_ids(**kwargs) # 只查询id和需要找到的值，缩短查询时间
+
+        total = q(offset).result.total_count
+        yield
+        new_total = q(offset).result.total_count
+        assert new_total == total + 1  # 新增生产单之后会增加一
+        if not field:  # 没有指定field则使用id比较，id需要可以使用int转为整数比较大小
+            id_list = []
+            while offset * 10 < new_total:
+                id_list.append(max([int(i) for i in q(offset).c("data[*].id")]))
+                offset += 1
+            self.id = max(id_list)
+        else:  # 指定类field，则使用field比较
+            while offset * 10 < new_total:
+                result = q(offset).filter_result(field, value)
+                logging.info(self.data)
+                logging.info(result)
+                if result:
+                    self.id = result[0]["id"]
+                    break
+                offset += 1
+
     def filter_result(self, path: str, value):
         """data[?name == 'value']"""
         if not path.startswith("data"):
@@ -27,6 +67,7 @@ class GraphqlQueryListAPi(GraphqlApi):
         paths = path.split(".")
         name, path = paths[-1], ".".join(paths[:-1])
         path += f"[?{name} == '{value}']"
+        logging.info(path)
         return self.capture(path)
 
     def search_result(self, path: str, value):

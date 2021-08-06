@@ -83,3 +83,21 @@ class TestGraphqlQuery:
         logging.info(q.variables)
         logging.info(q.result)
         assert q.result
+
+    @allure.title("find")
+    def test7(self):
+        q = QueryUsers(self.user)
+        from GraphqlApiObject.GraphqlApi.tools import create_num_string
+        ac = create_num_string(5, "a")
+        with q.find("account", ac):
+            c = CreateUser(self.user)
+            c.auto_tidy_run(
+                {
+                    "input.account": ac,
+                    "input.company.id": "869",
+                    "input.department.id": "813",
+                    "input.role": [{"id": "1292"}]
+                }
+            )
+        logging.info(q.run().result)
+        assert q.query().result.data[0].id == q.id
