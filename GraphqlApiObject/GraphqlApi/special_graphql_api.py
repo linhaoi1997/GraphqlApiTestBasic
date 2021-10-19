@@ -1,6 +1,7 @@
 import logging
 import random
 from contextlib import contextmanager
+from jmespath import search
 
 from .graphql_api import GraphqlApi
 from .gen_params import GenParams
@@ -15,15 +16,38 @@ class GraphqlQueryListAPi(GraphqlApi):
     def __init__(self, user):
         super().__init__(user)
         self.id = None
+        self.filter = {}
 
     def query(self, offset=0, limit=10, **kwargs):
-        return self.run(offset=offset, limit=limit, **kwargs)
+        return self.__query(offset=offset, limit=limit, **kwargs)
 
     def query_full(self, offset=0, limit=10, **kwargs):
-        return self.set("__fields__").run(offset=offset, limit=limit, **kwargs)
+        self.set("__fields__")
+        return self.__query(offset=offset, limit=limit, **kwargs)
 
     def query_ids(self, offset=0, limit=10, **kwargs):
-        return self.set("data.__fields__", "id").run(offset=offset, limit=limit, **kwargs)
+        self.set("data.__fields__", "id")
+        return self.__query(offset=offset, limit=limit, **kwargs)
+
+    def __query(self, offset=0, limit=10, **kwargs):
+        if not kwargs.get("filter") and self.filter:
+            kwargs["filter"] = self.filter
+        self.filter = {}
+        return self.run(offset=offset, limit=limit, **kwargs)
+
+    def set_filter(self, **kwargs):
+        for key, value in kwargs.items():
+            if value is not None:
+                self.filter[key] = value
+        return self
+
+    @property
+    def total_count(self):
+        return self.set("total_count").run().result.total_count
+
+    @property
+    def ids(self):
+        return self.c("data[*].id")
 
     @contextmanager
     def find(self, field=None, value=None, **kwargs):
@@ -38,11 +62,11 @@ class GraphqlQueryListAPi(GraphqlApi):
 
         def q(o):
             return self.set("data.__fields__", "id", *fields).set("total_count") \
-                .query_ids(**kwargs) # 只查询id和需要找到的值，缩短查询时间
+                .query_ids(**kwargs)  # 只查询id和需要找到的值，缩短查询时间
 
-        total = q(offset).result.total_count
+        total = self.total_count
         yield
-        new_total = q(offset).result.total_count
+        new_total = self.total_count
         assert new_total == total + 1  # 新增生产单之后会增加一
         if not field:  # 没有指定field则使用id比较，id需要可以使用int转为整数比较大小
             id_list = []
@@ -80,7 +104,7 @@ class GraphqlQueryListAPi(GraphqlApi):
             raise AssertionError(f"从 {self.data} 中使用 jmespath {path} 没找到值")
 
     def random(self, num=1):  # 随机从列表中取一个值
-        data = self.result.data
+        data = self.result
         if num == 1:
             return random.choice(data)
         else:
@@ -115,3 +139,6 @@ class GraphqlOperationAPi(GraphqlApi):
 
     def auto_tidy_run(self, paths: dict):  # 非必要的参数不填写进行测试
         return self._run(True, paths)
+
+    def search_from_input(self, expression):
+        return search(expression, self.variables)

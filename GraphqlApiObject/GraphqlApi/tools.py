@@ -10,7 +10,7 @@ class MyFaker(object):
     def __init__(self, fake_map=None):
         # 如果要关联到已存在的规则使用fake_map
         self.fake_map = {"phone": "phone_number"}
-        self.fake = Faker()
+        self.fake = Faker(['zh_CN'])
 
     def add_provider(self, provider: BaseProvider):
         self.fake.add_provider(provider)
@@ -35,6 +35,8 @@ class MyFaker(object):
     def __getattr__(self, item):
         if item == "password":
             return self.fake.password(special_chars=False)
+        elif item == "name":
+            return "_".join(["name", create_num_string(5)])
         try:
             return getattr(self.fake, item)()
         except AttributeError:

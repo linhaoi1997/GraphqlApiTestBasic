@@ -89,6 +89,12 @@ class TestGenParams:
         logging.info(data)
         assert data["input"]["name"] == "ces"
 
+    @allure.title("改变参数，无路径")
+    def test_change_param2(self):
+        data = GenParams(github_schema).gen(Mutation.create_project).change("name", None)
+        logging.info(data)
+        assert data["input"]["name"] is None
+
     @allure.title("改变参数，复杂路径")
     def test_change_params2(self):
         data = GenParams(github_schema).gen(Mutation.create_project).change("input.template", "AUTOMATED_KANBAN_V2")
@@ -155,6 +161,6 @@ class TestGenParams:
         assert data["input"]["editable"] == True
 
     def test(self):
-        from Schema.PlatformSchema.platform_schema import platform_schema, Mutation,ErpProductionTaskInput
+        from Schema.PlatformSchema.platform_schema import platform_schema, Mutation, ErpProductionTaskInput
         data = GenParams(platform_schema).gen_part(ErpProductionTaskInput)
         logging.info(data)
