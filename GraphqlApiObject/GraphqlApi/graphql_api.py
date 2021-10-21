@@ -80,8 +80,10 @@ class GraphqlApi(object):
     def capture(self, path, options=None):  # 使用jmespath拿到返回数据的值
         return jmespath.search(path, self.data, options=options)
 
-    def c(self, path):
-        return jmespath.search(f"data.{self.api_name}.{path}", self.data)
+    def c(self, path=""):
+        if path:
+            path = "." + path
+        return jmespath.search(f"data.{self.api_name}{path}", self.data)
 
     def assert_that(self, matcher=None, reason=""):  # 使用hamcrest进行对结果的校验
         assert_that(self, matcher, reason)

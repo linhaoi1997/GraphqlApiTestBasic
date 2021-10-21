@@ -7,7 +7,7 @@
 from .graphql_api import GraphqlApi
 from .tools import fake, create_timestamp, create_num_string
 from .gen_params import GenParams
-from .special_graphql_api import GraphqlQueryListAPi, GraphqlQueryAPi, GraphqlOperationAPi
+from .special_graphql_api import GraphqlQueryListAPi, GraphqlQueryAPi, GraphqlOperationAPi, GraphqlUpdateApi
 
 __all__ = ["GraphqlApi", "fake", "create_timestamp", "create_num_string", "GenParams",
-           "GraphqlQueryAPi", "GraphqlQueryListAPi", "GraphqlOperationAPi"]
+           "GraphqlQueryAPi", "GraphqlQueryListAPi", "GraphqlOperationAPi", "GraphqlUpdateApi"]
