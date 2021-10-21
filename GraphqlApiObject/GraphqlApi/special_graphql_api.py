@@ -142,3 +142,15 @@ class GraphqlOperationAPi(GraphqlApi):
 
     def search_from_input(self, expression):
         return search(expression, self.variables)
+
+
+class GraphqlUpdateApi(GraphqlOperationAPi):
+    def auto_run(self, paths: dict):  # 自动生成参数进行测试
+        if not paths.get("id"):
+            raise AssertionError("没有传入必填参数id")
+        return self._run(False, paths)
+
+    def auto_tidy_run(self, paths: dict):  # 非必要的参数不填写进行测试
+        if not paths.get("id"):
+            raise AssertionError("没有传入必填参数id")
+        return self._run(True, paths)
