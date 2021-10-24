@@ -1,5 +1,6 @@
 import os
 import importlib
+import argparse
 
 
 class GenCode:
@@ -11,12 +12,14 @@ class GenCode:
     @classmethod
     def write_class(cls, type_, api):
         suffix, end = api.name.split("_")[0].lower(), api.name.split("_")[-1].lower()
-        if suffix in ("create", "delete", "update"):
-            return cls.__write_class(type_, api, "Ge.GraphqlOperationAPi")
+        if suffix in ("create", "add"):
+            return cls.__write_class(type_, api, "GraphqlOperationAPi")
+        elif suffix in ("delete", "update", "set", "assign", "log", "cancel"):
+            return cls.__write_class(type_, api, "GraphqlUpdateApi")
         elif end.endswith("s") or end == "list":
-            return cls.__write_class(type_, api, "Ge.GraphqlQueryListAPi")
+            return cls.__write_class(type_, api, "GraphqlQueryListAPi")
         else:
-            return cls.__write_class(type_, api, "Ge.GraphqlQueryAPi")
+            return cls.__write_class(type_, api, "GraphqlQueryAPi")
 
     @classmethod
     def __write_class(cls, type_, api, base_api):
@@ -35,8 +38,8 @@ class {title_api_name}({base_api}):
     @classmethod
     def write_import(cls, module_name, query_or_mutation):
         return '''\
-from GraphqlApiObject import GraphqlApi, GraphqlApiExtension as Ge
-from %s import %s
+from graphqlapiobject import GraphqlApi, GraphqlOperationAPi, GraphqlUpdateApi, GraphqlQueryListAPi, GraphqlQueryAPi
+from ..%s import %s
 
 
 ''' % (module_name, str(query_or_mutation))
@@ -55,7 +58,7 @@ def make_package(des_name_):
         f.write(GenCode.write_init("Mutation", des_name_))
 
 
-def main(module_name, des_name_):
+def gen(module_name, des_name_):
     schema = importlib.import_module(module_name)
 
     def gen_writer(file_path, des_name, type_):
@@ -76,5 +79,10 @@ def main(module_name, des_name_):
     iter_create(schema.Mutation)
 
 
-if __name__ == '__main__':
-    main("Schema.platform_schema", "TestCreate")
+def main():
+    parser = argparse.ArgumentParser(description='code_gen modules names')
+    parser.add_argument('module_name', type=str, help='依据什么schema生成api')
+    parser.add_argument('des_name', type=str, help='生成的api的存放地址')
+
+    args = parser.parse_args()
+    gen(args.module_name, args.des_name)
