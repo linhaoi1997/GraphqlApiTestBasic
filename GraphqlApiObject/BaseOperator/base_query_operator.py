@@ -13,7 +13,10 @@ class BaseQueryOperator(object):
 
     def __init__(self, user, company_id=None):
         self.user = user
-        self.company_id = company_id or self.user.info["company"]["id"]
+        if self.filter_has_company:
+            self.company_id = company_id or self.user.info["company"]["id"]
+        else:
+            self.company_id = None
         self.base_filter["company"] = {"id": company_id}
         self._query_api: GraphqlQueryListAPi = self.query_api(self.user)
 

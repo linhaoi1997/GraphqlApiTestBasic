@@ -8,6 +8,7 @@ class BaseOperator:
     query_api: Type[GraphqlQueryAPi] = None  # 查询id
     query_list_api: Type[GraphqlQueryListAPi]  # 从list中过滤
     query_filter: Dict = {}  # 查询过滤条件
+    query_path: str = "data"
     filter_has_company: bool = True
 
     num_attr: List = []  # 用于计算数量的属性 [{"name":"total","path":"jmespath","describe":"拜访客户数"}]
@@ -21,15 +22,17 @@ class BaseOperator:
         self._query_list = self.query_list_api(self.user)
         self._query = self.query_api(self.user) if self.query_api else None
         self.attr.extend(self.num_attr)
-        self.company_id = company_id or self.user.info["company"]["id"]
         if self.filter_has_company:
+            self.company_id = company_id or self.user.info["company"]["id"]
             self.query_filter["company"] = {"id": company_id}
+        else:
+            self.company_id = None
 
     def detail(self):
         if self.query_api:
             yield self._query.query_full(self.id).data
-        yield self._query_list.query_full(filter=self.query_filter).search_result(
-            "id", self.id
+        yield self._query_list.query_full(filter=self.query_filter).c(
+            f"{self.query_path}[?id == '{self.id}'] | [0]"
         )
 
     @staticmethod
@@ -78,3 +81,10 @@ class BaseOperator:
                 assert_that(old_nums[i[name]] - i[change_num], equal_to(new_nums[i[name]]))
             else:
                 raise AssertionError(f"unknown change way: {change_way}")
+
+    @contextmanager
+    def change_user(self, user):
+        tmp = self.user
+        self.user = user
+        yield
+        self.user = tmp
