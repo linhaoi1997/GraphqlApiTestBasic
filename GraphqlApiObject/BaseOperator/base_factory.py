@@ -40,12 +40,14 @@ class BaseFactory:
     @classmethod
     def _create(cls, user, kwargs: Dict):  # 创建部分
         # 创建
-        all_args = kwargs.keys()
+        logging.info("开始创建资源,参数为:")
+        logging.info(kwargs)
+        kwargs_ = cls.make_args(user, kwargs)
+        kwargs_.update(kwargs)
+        all_args = kwargs_.keys()
         for i in cls.create_args:
             if i not in all_args:
                 raise AssertionError(f"没有传入 {i} 必填参数")
-        kwargs_ = cls.make_args(user, kwargs)
-        kwargs_.update(kwargs)
         c = cls.create_api(user).auto_run(kwargs_)
         return c
 
@@ -55,6 +57,7 @@ class BaseFactory:
 
     @classmethod
     def _query_single(cls, query_api, query_value):
+        logging.info("开始查询资源")
         expression = f"{cls.query_path}[?{cls.query_field} == '{query_value}'] | [0]"
         info = query_api.c(
             expression
@@ -73,9 +76,7 @@ class BaseFactory:
         # 查找
         filter_ = cls.make_query_filters()
         filter_.update(query_filter)
-        for i in cls.query_args:
-            if i not in filter_:
-                raise AssertionError("没有传入 {i} filter")
+        logging.info(f"query_filter: {query_filter}")
         q = cls.query_api(user).set_filter(**filter_).query_full()
         if not isinstance(query_value, list):  # 可能一次创建多个对象
             info = cls._query_single(q, query_value)
@@ -103,24 +104,25 @@ class BaseFactory:
             return [cls.operator(user, i, c.variables, query_filter) for i in info]
         return cls.operator(user, info, c.variables, query_filter)
 
+    @classmethod
+    def handle_args_from_instance(cls, instance, variables):
+        kwargs = {}
+        for arg in variables:  # 对这种形式传入的参数来讲，必是动态参数，从instance中获取
+            if arg.get("value"):  # 如果传了value直接使用
+                value = arg.get("value")
+            elif arg.get("func"):  # 如果没传value，那么去object里面取id，func设置id的格式
+                value = arg.get("func")(getattr(instance, arg["attr_name"]))
+            else:  # 默认的格式
+                value = getattr(instance, arg["attr_name"]).id
+            kwargs[arg["key"]] = value
+        return kwargs
+
     def __get__(self, instance, owner):
         if instance is None:
             return self
         else:
-            def handle_args(variables):
-                kwargs = {}
-                for arg in variables:  # 对这种形式传入的参数来讲，必是动态参数，从instance中获取
-                    if arg.get("value"):  # 如果传了value直接使用
-                        value = arg.get("value")
-                    elif arg.get("func"):  # 如果没传value，那么去object里面取id，func设置id的格式
-                        value = arg.get("func")(getattr(instance, arg["attr_name"]))
-                    else:  # 默认的格式
-                        value = getattr(instance, arg["attr_name"]).id
-                    kwargs[arg["key"]] = value
-                return kwargs
-
-            create_kwargs = handle_args(self.kwargs)
-            query_filter = handle_args(self.query_filter)
+            create_kwargs = self.handle_args_from_instance(instance, self.kwargs)
+            query_filter = self.handle_args_from_instance(instance, self.query_filter)
             if self.filter_has_company:
                 query_filter["company"] = {"id": instance.company.id}
             user = getattr(instance, self.user_name)  # 从object里面获取对应的用户

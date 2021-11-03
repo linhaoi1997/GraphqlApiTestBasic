@@ -5,7 +5,7 @@ from ..GraphqlApi import GraphqlQueryListAPi
 
 
 class BaseQueryOperator(object):
-    query_api = Type[GraphqlQueryListAPi]
+    query_api: Type[GraphqlQueryListAPi]
     base_filter: Dict = {}
     filter_has_company: bool = True
     limit = 20

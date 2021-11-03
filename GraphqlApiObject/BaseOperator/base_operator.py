@@ -1,5 +1,5 @@
 from typing import Type, List
-from ..GraphqlApi import GraphqlQueryListAPi, GraphqlQueryAPi
+from ..GraphqlApi import GraphqlQueryListAPi, GraphqlQueryAPi, GraphqlUpdateApi
 from contextlib import contextmanager
 from hamcrest import assert_that, equal_to
 
@@ -11,6 +11,8 @@ class BaseOperator:
 
     num_attr: List = []  # 用于计算数量的属性 [{"name":"total","path":"jmespath","describe":"拜访客户数"}]
     attr: List = []  # 用于计算其他的属性 [{"name":"status","path":"jmespath","describe":"拜访任务状态"}]
+
+    update_api: Type[GraphqlUpdateApi]
 
     def __init__(self, user, info, variables, query_filter):
         self.user = user
@@ -82,3 +84,9 @@ class BaseOperator:
         self.user = user
         yield
         self.user = tmp
+
+    def update_all(self, kwargs):
+        kwargs["input.id"] = self.id
+        return self.update_api(self.user).auto_run(
+            kwargs
+        )
