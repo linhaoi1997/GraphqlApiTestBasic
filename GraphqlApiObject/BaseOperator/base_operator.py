@@ -1,5 +1,5 @@
 from typing import Type, List
-from ..GraphqlApi import GraphqlQueryListAPi, GraphqlQueryAPi, GraphqlUpdateApi
+from ..GraphqlApi import GraphqlQueryListAPi, GraphqlQueryAPi, GraphqlUpdateApi, GraphqlApi
 from contextlib import contextmanager
 from hamcrest import assert_that, equal_to
 
@@ -13,6 +13,7 @@ class BaseOperator:
     attr: List = []  # 用于计算其他的属性 [{"name":"status","path":"jmespath","describe":"拜访任务状态"}]
 
     update_api: Type[GraphqlUpdateApi]
+    delete_api: Type[GraphqlApi]
 
     def __init__(self, user, info, variables, query_filter):
         self.user = user
@@ -26,10 +27,14 @@ class BaseOperator:
 
     def detail(self):
         if self.query_api:
-            yield self._query.query_full(self.id).result
-        yield self._query_list.set_filter(**self.query_filter).query_full().c(
+            yield self._query.query_full(self.id).c()
+        result = self._query_list.set_filter(**self.query_filter).query_full().c(
             f"{self.query_path}[?id == '{self.id}'] | [0]"
         )
+        if not result:
+            raise AssertionError("not found id")
+        else:
+            yield result
 
     @staticmethod
     def _return_detail(details: list):
@@ -89,4 +94,9 @@ class BaseOperator:
         kwargs["input.id"] = self.id
         return self.update_api(self.user).auto_run(
             kwargs
+        )
+
+    def delete(self):
+        return self.delete_api(self.user).run(
+            ids=[self.id]
         )

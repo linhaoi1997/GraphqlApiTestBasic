@@ -1,3 +1,4 @@
+import logging
 from typing import Type, Dict
 from functools import partial
 
@@ -17,22 +18,26 @@ class BaseQueryOperator(object):
             self.company_id = company_id or self.user.info["company"]["id"]
         else:
             self.company_id = None
-        self.base_filter["company"] = {"id": company_id}
-        self._query_api: GraphqlQueryListAPi = self.query_api(self.user)
+
+        logging.info(self.company_id)
+        self.base_filter["company"] = {"id": self.company_id}
+        self.query: GraphqlQueryListAPi = self.query_api(self.user)
 
     def search_row(self, query_path, query_field, query_value, filter_dict: Dict):
         filter_dict.update(self.base_filter)
-        return self._query_api.query(offset=self.offset, limit=self.limit, filter=filter_dict).c(
+        return self.query.query(offset=self.offset, limit=self.limit, filter=filter_dict).c(
             f"{query_path}[?{query_field} == '{query_value}'] | [0]"
         )
 
     def filter_by(self, key, value):
-        self._query_api.set_filter(key=value, **self.base_filter)
-        return self._query_api.query()
+        kwargs = {key: value}
+        kwargs.update(self.base_filter)
+        self.query.set_filter(**kwargs)
+        return self.query.query()
 
     @property
     def ids(self):
-        return self._query_api.ids
+        return self.query.ids
 
     def __getattr__(self, item: str):
         if item.startswith("filter_by_"):
