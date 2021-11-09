@@ -1,5 +1,5 @@
 import logging
-from typing import Type, Dict, List
+from typing import Type, List
 
 import pytest
 import allure
@@ -25,7 +25,7 @@ class UpdateMetaParams(type):
 class UpdateCasesTemplate(metaclass=UpdateMetaParams):
     create_factory: Type[BaseFactory]  # 创建工厂
     operator: BaseOperator  # 要更新的对象
-    update_args: Dict  # 更新的参数
+    update_args: List  # 更新的参数
     base_data: BaseData  # 数据模版
     assert_jmespath: List[str or List[str]]  # 校验jmespath
     users: List[BaseUser] = []
