@@ -6,5 +6,5 @@ __all__ = [
     "GraphqlApi", "fake", "create_timestamp", "create_num_string", "GenParams",
     "BaseUser", "BaseUser", "record", "pformat",
     "GraphqlOperationAPi", "GraphqlQueryListAPi", "GraphqlQueryAPi", "GraphqlUpdateApi",
-    "BaseFactory", "BaseOperator", "BaseQueryOperator", "IdDictBuilder"
+    "BaseFactory", "BaseOperator", "BaseQueryOperator", "IdDictBuilder", "GraphqlQueryListWithoutOffsetAPi"
 ]

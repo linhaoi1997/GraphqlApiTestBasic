@@ -41,7 +41,7 @@ class {snake_to_camel(name)}Factory(BaseFactory):
 
     @classmethod
     def make_args(cls, user, kwargs):
-        pass
+        return {{}}
 """
 
     @classmethod
@@ -64,17 +64,17 @@ class %sOperator(BaseOperator):
     delete_api = 
 
     def delete(self):
-        return (self.user).run(id = [self.id])
+        return self.delete_api(self.user).run(id = [self.id])
 """ % snake_to_camel(name)
 
     @classmethod
     def gen_query_operator(cls, name: str):
         return f"""from graphqlapiobject import BaseQueryOperator
-from ...apis.Query_apis import TypeCompanies
+from ...apis.Query_apis import 
 
 
 class %sQueryOperator(BaseQueryOperator):
-    query_api = Type[GraphqlQueryListAPi]
+    query_api : Type[GraphqlQueryListAPi] = 
     base_filter: Dict = 
     filter_has_company: bool = True
 
