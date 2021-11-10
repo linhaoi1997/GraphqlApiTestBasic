@@ -3,7 +3,6 @@ import os
 
 
 def snake_to_camel(name):
-    name = 'snake_case_name'
     name = ''.join(word.title() for word in name.split('_'))
     return name
 

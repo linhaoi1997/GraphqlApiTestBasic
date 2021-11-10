@@ -111,6 +111,25 @@ class GraphqlQueryListAPi(GraphqlApi):
             return random.sample(data, num)
 
 
+class GraphqlQueryListWithoutOffsetAPi(GraphqlQueryListAPi):
+
+    def query(self, **kwargs):
+        self.set("__fields__")
+        return self.__query(**kwargs)
+
+    def query_full(self, **kwargs):
+        return self.query(**kwargs)
+
+    def query_ids(self, **kwargs):
+        return self.query(**kwargs)
+
+    def __query(self, **kwargs):
+        if not kwargs.get("filter") and self.filter:
+            kwargs["filter"] = self.filter
+        self.filter = {}
+        return self.run(**kwargs)
+
+
 class GraphqlQueryAPi(GraphqlApi):
 
     def query(self, id_):
