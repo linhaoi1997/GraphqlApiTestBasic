@@ -2,25 +2,30 @@ import argparse
 import os
 
 
+def snake_to_camel(name):
+    name = 'snake_case_name'
+    name = ''.join(word.title() for word in name.split('_'))
+    return name
+
+
 class CodeGen:
 
     @classmethod
     def gen_init(cls, name: str):
-        return f"""
-        from .{name}_factory import {name.title()}Factory
-        from .{name}_operator import {name.title()}Operator
-        from .{name}_query_operator import {name.title()}QueryOperator
+        return f"""from .{name}_factory import {snake_to_camel(name)}Factory
+from .{name}_operator import {snake_to_camel(name)}Operator
+from .{name}_query_operator import {snake_to_camel(name)}QueryOperator
 """
 
     @classmethod
     def gen_factory(cls, name: str):
         return f"""from graphqlapiobject.BaseOperator import BaseFactory
-from .{name}_operator import {name.title()}Operator
+from .{name}_operator import {snake_to_camel(name)}Operator
 from ...apis.Mutation_apis import 
 from ...apis.Query_apis import 
 
 
-class {name.title()}Factory(BaseFactory):
+class {snake_to_camel(name)}Factory(BaseFactory):
     # 创建部分
     create_api: Type[GraphqlOperationAPi] =  # 创建调用的接口
     create_args: List[str] =   # 创建时必填的参数
@@ -33,7 +38,7 @@ class {name.title()}Factory(BaseFactory):
     query_field: str =   # 路径下对应的查找的值
     query_value_path: str or None =  # 查找的值等于什么，这个是路径，从create的参数中jmespath搜索
     # 返回操作器部分
-    operator: Type[BaseOperator] = 
+    operator: Type[BaseOperator] = {snake_to_camel(name)}Operator
 
     @classmethod
     def make_args(cls, user, kwargs):
@@ -55,10 +60,13 @@ class %sOperator(BaseOperator):
 
     num_attr: List = []  # 用于计算数量的属性 [{"name":"total","path":"jmespath","describe":"拜访客户数"}]
     attr: List = []  # 用于计算其他的属性 [{"name":"status","path":"jmespath","describe":"拜访任务状态"}]
+    
+    update_api = 
+    delete_api = 
 
     def delete(self):
-        return (self.user).run(input={"ids": [self.id]})
-""" % name.title()
+        return (self.user).run(id = [self.id])
+""" % snake_to_camel(name)
 
     @classmethod
     def gen_query_operator(cls, name: str):
@@ -71,7 +79,7 @@ class %sQueryOperator(BaseQueryOperator):
     base_filter: Dict = 
     filter_has_company: bool = True
 
-""" % name.title()
+""" % snake_to_camel(name)
 
     @classmethod
     def gen(cls, name):

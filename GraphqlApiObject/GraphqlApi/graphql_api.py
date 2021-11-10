@@ -81,7 +81,7 @@ class GraphqlApi(object):
         return jmespath.search(path, self.data, options=options)
 
     def c(self, path=""):
-        if path:
+        if path and path.startswith("data"):
             path = "." + path
         return jmespath.search(f"data.{self.api_name}{path}", self.data)
 

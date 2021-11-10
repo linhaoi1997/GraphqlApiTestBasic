@@ -1,76 +1,85 @@
 import logging
-from typing import Type, List
+from typing import Type, List, Callable
 
 import pytest
 import allure
 from assert_methods import return_equal_input, query_paging
 
-from .base_data import BaseData
-from .base_factory import BaseFactory, BaseOperator
+from .base_factory import BaseFactory
 from .base_query_operator import BaseQueryOperator
 
 from hamcrest import assert_that, is_in, not_
-
-from ..User.base_user import BaseUser
 
 
 class UpdateMetaParams(type):
 
     def __new__(cls, clsname, bases, clsdict):
         if bases:
-            clsdict[f"test_update"] = pytest.mark.parametrize("user", clsdict.get("users"))(bases[0].update)
+            clsdict[f"test_update"] = pytest.mark.parametrize("user_name", clsdict.get("users"))(bases[0].update)
         return type.__new__(cls, clsname, bases, clsdict)
 
 
 class UpdateCasesTemplate(metaclass=UpdateMetaParams):
     create_factory: Type[BaseFactory]  # 创建工厂
-    operator: BaseOperator  # 要更新的对象
+    operator: str  # 要更新的对象
     update_args: List  # 更新的参数
-    base_data: BaseData  # 数据模版
     assert_jmespath: List[str or List[str]]  # 校验jmespath
-    users: List[BaseUser] = []
+    users: List[str] = []
 
     @allure.title("{user}执行标准更新用例")
-    def update(self, user):
+    def update(self, user_name, data):
         with allure.step("选定执行人"):
-            self.operator.user = user
+            operator = getattr(data, self.operator)
+            user = getattr(data, user_name)
+            operator.user = user
         with allure.step("构建参数"):
-            kwargs = {"id": self.operator.id}
-            kwargs.update(self.create_factory.handle_args_from_instance(self.base_data, self.update_args))
+            kwargs = {"id": operator.id}
+            kwargs.update(self.create_factory.handle_args_from_instance(data, self.update_args))
             kwargs.update(self.create_factory.make_args(user, kwargs))
         with allure.step("执行更新"):
-            update = self.operator.update_all(kwargs)
+            update = operator.update_all(kwargs)
         with allure.step("校验结果"):
-            for detail in self.operator.detail():
+            for detail in operator.detail():
                 assert_that(
                     detail,
                     return_equal_input(update.variables, self.assert_jmespath)
                 )
+        with allure.step("其他校验"):
+            return self.other_assert(operator, update, data)
+
+    def other_assert(self, operator, update, data):
+        pass
+
+    @allure.title("标记测试")
+    def test(self):
+        pass
 
 
 class CreateCasesTemplate:
-    operator: BaseOperator  # 要更新的对象
+    operator: str  # 要更新的对象
     assert_jmespath: List[str or List[str]]  # 校验jmespath
 
     @allure.title("执行标准创建用例")
-    def test_update(self):
+    def test_update(self, data):
+        operator = getattr(data, self.operator)
         with allure.step("校验创建返回相等"):
-            for detail in self.operator.detail():
+            for detail in operator.detail():
                 assert_that(
                     detail,
-                    return_equal_input(self.operator.variables, self.assert_jmespath)
+                    return_equal_input(operator.variables, self.assert_jmespath)
                 )
 
 
 class DeleteCasesTemplate:
-    operator: BaseOperator  # 要删除的对象
+    operator: str  # 要删除的对象
 
     @allure.title("执行删除创建用例")
-    def test_delete(self):
+    def test_delete(self, data):
+        operator = getattr(data, self.operator)
         with allure.step("删除资源"):
-            self.operator.delete()
+            operator.delete()
         with allure.step("查询不到资源"):
-            detail = self.operator.detail()
+            detail = operator.detail()
             while True:
                 try:
                     with pytest.raises(AssertionError):
@@ -89,30 +98,38 @@ class QueryMetaParams(type):
 
 
 class QueryFilterCasesTemplate(metaclass=QueryMetaParams):
-    base_data: BaseData  # 数据
-    query: BaseQueryOperator
+    query: Type[BaseQueryOperator]
+    user: str
+    company: str = None
 
     filters_info = [
         {
             "filter_key": "department",
             "data": [
-                {"filter_value": {"id": "id1"}, "value": ["department1", "department2"]},
-                {"filter_value": {"id": "id2"}, "value": ["department3", "department4"]},
+                {"filter_value": Callable, "value": ["department1", "department2"]},
+                {"filter_value": Callable, "value": ["department3", "department4"]},
             ]
         }
     ]
 
+    @allure.title("标记测试")
+    def test(self):
+        pass
+
     @allure.title("执行标准查询筛选用例: {filter_key}")
-    def do_filter(self, filter_info):
+    def do_filter(self, filter_info, data):
+        company_id = getattr(data, self.company).id if self.company else None
+        user = getattr(data, self.user)
+        query = self.query(user, company_id)
 
         def collect_id(value):
             result = []
             for operator in value:
-                data = getattr(self.base_data, operator)
-                if isinstance(data, list):
-                    result.extend([o.id for o in data])
+                data_ = getattr(data, operator)
+                if isinstance(data_, list):
+                    result.extend([o.id for o in data_])
                 else:
-                    result.append(data.id)
+                    result.append(data_.id)
             return result
 
         with allure.step("拿到所有id list"):
@@ -124,10 +141,13 @@ class QueryFilterCasesTemplate(metaclass=QueryMetaParams):
                 id_list.append(j)
 
         for i in id_list:
+            i["filter_value"] = i["filter_value"](data)
+
+        for i in id_list:
             filter_value = i['filter_value']
             logging.info(f"开始筛选: {filter_value}")
             with allure.step("按照筛选条件查询"):
-                ids = self.query.filter_by(filter_info["filter_key"], filter_value).ids
+                ids = query.filter_by(filter_info["filter_key"], filter_value).ids
 
             in_ids = []
             not_in_ids = []
@@ -149,16 +169,19 @@ class QueryFilterCasesTemplate(metaclass=QueryMetaParams):
 
 
 class QueryPagingCasesTemplate:
-    base_data: BaseData  # 数据
-    query: BaseQueryOperator
-    resource: str  # base_data中的属性
+    query: Type[BaseQueryOperator]
+    user: str
+    resource: str  # base_data中的属性,用于创建资源
+    company: str = None
 
     @allure.title("执行标准分页用例")
-    def test(self):
-        total = self.query.query.total_count
+    def test(self, data):
+        company_id = getattr(data, self.company).id if self.company else None
+        query = self.query(getattr(data, self.user), company_id)
+        total = query.query.total_count
         if total < 15:
             create_num = 15 - total
             for i in range(create_num):
-                getattr(self.base_data, self.resource)
+                getattr(data, self.resource)
 
-        assert_that(self.query.query, query_paging())
+        assert_that(query.query, query_paging())
