@@ -1,4 +1,5 @@
 import copy
+import logging
 
 
 class BaseData:
@@ -11,3 +12,7 @@ class BaseData:
 
     def setup(self):
         pass
+
+    def create_all_resource(self):
+        for i in dir(self):
+            logging.info(getattr(self, i))
