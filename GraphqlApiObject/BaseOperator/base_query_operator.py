@@ -1,8 +1,9 @@
 import logging
-from typing import Type, Dict
+from typing import Type, Dict, List
 from functools import partial
 
 from ..GraphqlApi import GraphqlQueryListAPi
+from .base_operator import BaseOperator
 
 
 class BaseQueryOperator(object):
@@ -45,3 +46,51 @@ class BaseQueryOperator(object):
             return partial(self.filter_by, key)
         else:
             raise AssertionError(f"QueryOperator object has no attribute named {item}")
+
+
+class OperatorGetFromList(object):
+    query_operator: Type[BaseQueryOperator]
+    query_path: str
+    query_field: str
+    operator: Type[BaseOperator]
+
+    def __init__(self, user, query_value: Dict, filter_dict: List[Dict], filter_has_company=True):
+        """
+        :param user: str
+        :param query_value: {"attr":department1,"func":func,"value":"value"}
+        :param filter_dict: [{"key":"company","attr_name":"company","func": return_id_input,"value":"bulabula"}]
+        """
+        self.user_name = user
+        self.filter_dict = filter_dict
+        self.query_value = query_value
+        self.filter_has_company = filter_has_company
+
+    @classmethod
+    def handle_args_from_instance(cls, instance, variables):
+        kwargs = {}
+        for arg in variables:  # 对这种形式传入的参数来讲，必是动态参数，从instance中获取
+            if arg.get("value"):  # 如果传了value直接使用
+                value = arg.get("value")
+            elif arg.get("func"):  # 如果没传value，那么去object里面取id，func设置id的格式
+                value = arg.get("func")(getattr(instance, arg["attr_name"]))
+            else:  # 默认的格式
+                value = getattr(instance, arg["attr_name"]).id
+            kwargs[arg["key"]] = value
+        return kwargs
+
+    def handle_value(self, instance):
+        if self.query_value.get("value"):
+            return self.query_value.get("value")
+        elif not self.query_value.get("func"):
+            return getattr(instance, self.query_value["attr"]).id
+        else:
+            return self.query_value.get("func")(getattr(instance, self.query_value["attr"]))
+
+    def __get__(self, instance, owner):
+        user = getattr(instance, self.user_name)
+        query_filter = self.handle_args_from_instance(instance, self.filter_dict)
+        value = self.handle_value(instance)
+        if self.filter_has_company:
+            query_filter["company"] = {"id": instance.company.id}
+        info = self.query_operator(user).search_row(self.query_path, self.query_field, value, query_filter)
+        return self.operator(user, info, {}, query_filter)

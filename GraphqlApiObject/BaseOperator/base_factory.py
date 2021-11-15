@@ -111,7 +111,9 @@ class BaseFactory:
             if arg.get("value"):  # 如果传了value直接使用
                 value = arg.get("value")
             elif arg.get("func"):  # 如果没传value，那么去object里面取id，func设置id的格式
-                value = arg.get("func")(getattr(instance, arg["attr_name"]))
+                attr = [getattr(instance, i) for i in arg["attr_name"]] if isinstance(arg["attr_name"], list) else \
+                    getattr(instance, arg["attr_name"])
+                value = arg.get("func")(attr)
             else:  # 默认的格式
                 value = getattr(instance, arg["attr_name"]).id
             kwargs[arg["key"]] = value
