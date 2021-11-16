@@ -11,47 +11,36 @@ from .base_query_operator import BaseQueryOperator
 from hamcrest import assert_that, is_in, not_
 
 
-class UpdateMetaParams(type):
-
-    def __new__(cls, clsname, bases, clsdict):
-        if bases:
-            clsdict[f"test_update"] = pytest.mark.parametrize("user_name", clsdict.get("users"))(bases[0].update)
-        return type.__new__(cls, clsname, bases, clsdict)
-
-
-class UpdateCasesTemplate(metaclass=UpdateMetaParams):
+class UpdateCasesTemplate:
     create_factory: Type[BaseFactory]  # 创建工厂
     operator: str  # 要更新的对象
     update_args: List  # 更新的参数
     assert_jmespath: List[str or List[str]]  # 校验jmespath
     users: List[str] = []
 
-    @allure.title("{user}执行标准更新用例")
-    def update(self, user_name, data):
-        with allure.step("选定执行人"):
-            operator = getattr(data, self.operator)
-            user = getattr(data, user_name)
-            operator.user = user
-        with allure.step("构建参数"):
-            kwargs = {"id": operator.id}
-            kwargs.update(self.create_factory.handle_args_from_instance(data, self.update_args))
-            kwargs.update(self.create_factory.make_args(user, kwargs))
-        with allure.step("执行更新"):
-            update = operator.update_all(kwargs)
-        with allure.step("校验结果"):
-            for detail in operator.detail():
-                assert_that(
-                    detail,
-                    return_equal_input(update.variables, self.assert_jmespath)
-                )
-        with allure.step("其他校验"):
-            return self.other_assert(operator, update, data)
+    @allure.title("执行标准更新用例")
+    def test_update(self, data):
+        for user_name in self.users:
+            with allure.step("选定执行人"):
+                operator = getattr(data, self.operator)
+                user = getattr(data, user_name)
+                operator.user = user
+            with allure.step("构建参数"):
+                kwargs = {"id": operator.id}
+                kwargs.update(self.create_factory.handle_args_from_instance(data, self.update_args))
+                kwargs.update(self.create_factory.make_args(user, kwargs))
+            with allure.step("执行更新"):
+                update = operator.update_all(kwargs)
+            with allure.step("校验结果"):
+                for detail in operator.detail():
+                    assert_that(
+                        detail,
+                        return_equal_input(update.variables, self.assert_jmespath)
+                    )
+            with allure.step("其他校验"):
+                return self.other_assert(operator, update, data)
 
     def other_assert(self, operator, update, data):
-        pass
-
-    @allure.title("标记测试")
-    def test(self):
         pass
 
 
@@ -60,7 +49,7 @@ class CreateCasesTemplate:
     assert_jmespath: List[str or List[str]]  # 校验jmespath
 
     @allure.title("执行标准创建用例")
-    def test_update(self, data):
+    def test_create(self, data):
         operator = getattr(data, self.operator)
         with allure.step("校验创建返回相等"):
             for detail in operator.detail():
@@ -88,16 +77,7 @@ class DeleteCasesTemplate:
                     break
 
 
-class QueryMetaParams(type):
-
-    def __new__(cls, clsname, bases, clsdict):
-        if bases:
-            clsdict["test_filters"] = pytest.mark.parametrize("filter_info", clsdict.get("filters_info"))(
-                bases[0].do_filter)
-        return type.__new__(cls, clsname, bases, clsdict)
-
-
-class QueryFilterCasesTemplate(metaclass=QueryMetaParams):
+class QueryFilterCasesTemplate():
     query: Type[BaseQueryOperator]
     user: str
     company: str = None
@@ -112,12 +92,8 @@ class QueryFilterCasesTemplate(metaclass=QueryMetaParams):
         }
     ]
 
-    @allure.title("标记测试")
-    def test(self):
-        pass
-
-    @allure.title("执行标准查询筛选用例: {filter_key}")
-    def do_filter(self, filter_info, data):
+    @allure.title("执行标准查询筛选用例")
+    def test_filter(self, data):
         company_id = getattr(data, self.company).id if self.company else None
         user = getattr(data, self.user)
         query = self.query(user, company_id)
@@ -131,41 +107,41 @@ class QueryFilterCasesTemplate(metaclass=QueryMetaParams):
                 else:
                     result.append(data_.id)
             return result
-
-        with allure.step("拿到所有id list"):
-            id_list = []
-            for i in filter_info["data"]:
-                j = {"filter_value": i["filter_value"], "value": collect_id(i["value"])}
-                logging.info(f'筛选项: {j["filter_value"]}')
-                logging.info(f'对应id: {j["value"]}')
-                id_list.append(j)
-
-        for i in id_list:
-            i["filter_value"] = i["filter_value"](data)
-
-        for i in id_list:
-            filter_value = i['filter_value']
-            logging.info(f"开始筛选: {filter_value}")
-            with allure.step("按照筛选条件查询"):
-                ids = query.filter_by(filter_info["filter_key"], filter_value).ids
-
-            in_ids = []
-            not_in_ids = []
-            for j in id_list:
-                if j["filter_value"] == filter_value:
-                    in_ids.extend(j["value"])
-                else:
-                    not_in_ids.extend(j["value"])
-            logging.info(f"结果不应该包含的id: {not_in_ids}")
-            logging.info(f"结果应该包含的id: {in_ids}")
-
-            with allure.step("校验应该查询到的值"):
-                for k in in_ids:
-                    assert_that(k, is_in(ids))
-
-            with allure.step("校验不应该查询到的值"):
-                for k in not_in_ids:
-                    assert_that(k, not_(is_in(ids)))
+        for filter_info in self.filters_info:
+            with allure.step("拿到所有id list"):
+                id_list = []
+                for i in filter_info["data"]:
+                    j = {"filter_value": i["filter_value"], "value": collect_id(i["value"])}
+                    logging.info(f'筛选项: {j["filter_value"]}')
+                    logging.info(f'对应id: {j["value"]}')
+                    id_list.append(j)
+    
+            for i in id_list:
+                i["filter_value"] = i["filter_value"](data)
+    
+            for i in id_list:
+                filter_value = i['filter_value']
+                logging.info(f"开始筛选: {filter_value}")
+                with allure.step("按照筛选条件查询"):
+                    ids = query.filter_by(filter_info["filter_key"], filter_value).ids
+    
+                in_ids = []
+                not_in_ids = []
+                for j in id_list:
+                    if j["filter_value"] == filter_value:
+                        in_ids.extend(j["value"])
+                    else:
+                        not_in_ids.extend(j["value"])
+                logging.info(f"结果不应该包含的id: {not_in_ids}")
+                logging.info(f"结果应该包含的id: {in_ids}")
+    
+                with allure.step("校验应该查询到的值"):
+                    for k in in_ids:
+                        assert_that(k, is_in(ids))
+    
+                with allure.step("校验不应该查询到的值"):
+                    for k in not_in_ids:
+                        assert_that(k, not_(is_in(ids)))
 
 
 class QueryPagingCasesTemplate:
