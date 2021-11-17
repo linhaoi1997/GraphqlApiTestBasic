@@ -22,7 +22,8 @@ class BaseFactory:
     # 返回操作器部分
     operator: Type[BaseOperator]
 
-    def __init__(self, name, user_name: str, kwargs: List, query_filter: List, is_single=True, filter_has_company=True):
+    def __init__(self, name, user_name: str, kwargs: list = None, query_filter: list = None, is_single=True,
+                 filter_has_company=True):
         """
         :param name: 在类中的名称
         :param user_name: 使用人员的属性
@@ -30,6 +31,10 @@ class BaseFactory:
         :param kwargs: 创建的字典[{"key":"company","attr_name":"company","func": return_id_input,"value":"bulabula"}]
         :param is_single: 是否仅创建一次，再次创建返回之前创建的对象，还是说每次都创建新的对象
         """
+        if query_filter is None:
+            query_filter = []
+        if kwargs is None:
+            kwargs = []
         self.user_name = user_name
         self.name = name
         self.kwargs = kwargs

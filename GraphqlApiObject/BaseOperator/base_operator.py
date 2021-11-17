@@ -18,7 +18,7 @@ class BaseOperator:
     def __init__(self, user, info, variables, query_filter):
         self.user = user
         self.info = info
-        self.id = info["id"]
+        self.id = info.get("id")
         self.variables = variables
         self.query_filter = query_filter
         self._query_list = self.query_list_api(self.user)

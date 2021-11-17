@@ -26,7 +26,7 @@ class BaseQueryOperator(object):
 
     def search_row(self, query_path, query_field, query_value, filter_dict: Dict):
         filter_dict.update(self.base_filter)
-        return self.query.query(offset=self.offset, limit=self.limit, filter=filter_dict).c(
+        return self.query.query_full(offset=self.offset, limit=self.limit, filter=filter_dict).c(
             f"{query_path}[?{query_field} == '{query_value}'] | [0]"
         )
 
