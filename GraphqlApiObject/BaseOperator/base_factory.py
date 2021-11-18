@@ -79,7 +79,7 @@ class BaseFactory:
             cls.query_value_path = ".".join(["input", cls.query_field])
         query_value = create_api.search_from_input("input." + cls.query_value_path)
         # 查找
-        filter_ = cls.make_query_filters()
+        filter_ = cls.make_query_filters(user, query_filter)
         filter_.update(query_filter)
         logging.info(f"query_filter: {query_filter}")
         q = cls.query_api(user).set_filter(**filter_).query_full()
@@ -93,7 +93,7 @@ class BaseFactory:
             return infos
 
     @classmethod
-    def make_query_filters(cls):
+    def make_query_filters(cls, user, query_filter):
         return {}
 
     @classmethod
