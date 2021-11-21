@@ -11,3 +11,4 @@ pyproject.toml
 *.env
 *env
 config.py
+/test

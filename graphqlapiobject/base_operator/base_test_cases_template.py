@@ -27,8 +27,8 @@ class UpdateCasesTemplate:
                 operator.user = user
             with allure.step("构建参数"):
                 kwargs = {"id": operator.id}
-                kwargs.update(self.create_factory.handle_args_from_instance(data, self.update_args))
-                kwargs.update(self.create_factory.make_args(user, kwargs))
+                create_args = self.create_factory.handle_args_from_instance(data, self.update_args)
+                kwargs.update(self.create_factory.prepare_create_args(user, create_args))
             with allure.step("执行更新"):
                 update = operator.update_all(kwargs)
             with allure.step("校验结果"):
@@ -77,7 +77,7 @@ class DeleteCasesTemplate:
                     break
 
 
-class QueryFilterCasesTemplate():
+class QueryFilterCasesTemplate:
     query: Type[BaseQueryOperator]
     user: str
     company: str = None
@@ -107,6 +107,7 @@ class QueryFilterCasesTemplate():
                 else:
                     result.append(data_.id)
             return result
+
         for filter_info in self.filters_info:
             with allure.step("拿到所有id list"):
                 id_list = []
@@ -115,16 +116,16 @@ class QueryFilterCasesTemplate():
                     logging.info(f'筛选项: {j["filter_value"]}')
                     logging.info(f'对应id: {j["value"]}')
                     id_list.append(j)
-    
+
             for i in id_list:
                 i["filter_value"] = i["filter_value"](data)
-    
+
             for i in id_list:
                 filter_value = i['filter_value']
                 logging.info(f"开始筛选: {filter_value}")
                 with allure.step("按照筛选条件查询"):
                     ids = query.filter_by(filter_info["filter_key"], filter_value).ids
-    
+
                 in_ids = []
                 not_in_ids = []
                 for j in id_list:
@@ -134,11 +135,11 @@ class QueryFilterCasesTemplate():
                         not_in_ids.extend(j["value"])
                 logging.info(f"结果不应该包含的id: {not_in_ids}")
                 logging.info(f"结果应该包含的id: {in_ids}")
-    
+
                 with allure.step("校验应该查询到的值"):
                     for k in in_ids:
                         assert_that(k, is_in(ids))
-    
+
                 with allure.step("校验不应该查询到的值"):
                     for k in not_in_ids:
                         assert_that(k, not_(is_in(ids)))

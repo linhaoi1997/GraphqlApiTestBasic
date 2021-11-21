@@ -1,6 +1,6 @@
-from .GraphqlApi import *
-from .User import *
-from .BaseOperator import *
+from .graphql_api_object import *
+from .user import *
+from .base_operator import *
 
 __all__ = [
     "GraphqlApi", "fake", "create_timestamp", "create_num_string", "GenParams",

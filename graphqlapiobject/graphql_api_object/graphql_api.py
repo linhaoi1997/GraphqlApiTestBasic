@@ -1,6 +1,6 @@
 from python_utils.formatters import camel_to_underscore
 from sgqlc.operation import Operation
-from ..User.base_user import BaseUser
+from ..user.base_user import BaseUser
 import jmespath
 from hamcrest import assert_that
 from contextlib import contextmanager

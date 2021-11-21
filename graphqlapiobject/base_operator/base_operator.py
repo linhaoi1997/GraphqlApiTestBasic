@@ -1,13 +1,12 @@
+import logging
 from typing import Type, List
-from ..GraphqlApi import GraphqlQueryListAPi, GraphqlQueryAPi, GraphqlUpdateApi, GraphqlApi
+from ..graphql_api_object import GraphqlQueryAPi, GraphqlUpdateApi, GraphqlApi
 from contextlib import contextmanager
 from hamcrest import assert_that, equal_to
 
 
 class BaseOperator:
     query_api: Type[GraphqlQueryAPi] = None  # 查询id
-    query_list_api: Type[GraphqlQueryListAPi]  # 从list中过滤
-    query_path: str = "data"
 
     num_attr: List = []  # 用于计算数量的属性 [{"name":"total","path":"jmespath","describe":"拜访客户数"}]
     attr: List = []  # 用于计算其他的属性 [{"name":"status","path":"jmespath","describe":"拜访任务状态"}]
@@ -15,23 +14,28 @@ class BaseOperator:
     update_api: Type[GraphqlUpdateApi]
     delete_api: Type[GraphqlApi]
 
-    def __init__(self, user, info, variables, query_filter):
+    def __init__(self, user, info, variables, query_filter, query_list_api, query_path):
         self.user = user
         self.info = info
         self.id = info.get("id")
         self.variables = variables
         self.query_filter = query_filter
-        self._query_list = self.query_list_api(self.user)
+        self._query_list = query_list_api(self.user)
+        self.query_path = query_path
         self._query = self.query_api(self.user) if self.query_api else None
         self.attr.extend(self.num_attr)
 
     def detail(self):
         if self.query_api:
+            logging.info("查询单接口")
             yield self._query.query_full(self.id).c()
+        logging.info("查询列表接口")
         result = self._query_list.set_filter(**self.query_filter).query_full().c(
             f"{self.query_path}[?id == '{self.id}'] | [0]"
         )
         if not result:
+            logging.info(f"查询结果: {self._query_list.result}")
+            logging.info(f"jmespath: {self.query_path}[?id == '{self.id}'] | [0]")
             raise AssertionError("not found id")
         else:
             yield result
@@ -45,15 +49,7 @@ class BaseOperator:
             return details[0]
 
     def __getitem__(self, item):
-        for i in self.attr:
-            if item == i["name"] or item == i["describe"]:
-                name = i["name"]
-                break
-        else:
-            raise AssertionError("从定义的属性中没有找到该属性")
-
-        details = [i[name] for i in list(self.detail())]
-
+        details = [i[item] for i in list(self.detail())]
         return self._return_detail(details)
 
     def all_nums_attr(self):

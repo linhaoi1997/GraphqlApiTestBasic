@@ -18,7 +18,7 @@ from .{name}_query_operator import {snake_to_camel(name)}QueryOperator
 
     @classmethod
     def gen_factory(cls, name: str):
-        return f"""from graphqlapiobject.BaseOperator import BaseFactory
+        return f"""from graphqlapiobject.base_operator import BaseFactory
 from .{name}_operator import {snake_to_camel(name)}Operator
 from ...apis.Mutation_apis import 
 from ...apis.Query_apis import 
@@ -37,22 +37,32 @@ class {snake_to_camel(name)}Factory(BaseFactory):
     query_field: str =   # 路径下对应的查找的值
     query_value_path: str or None =  # 查找的值等于什么，这个是路径，从create的参数中jmespath搜索
     # 返回操作器部分
-    operator: Type[BaseOperator] = {snake_to_camel(name)}Operator
+    operator: Type[base_operator] = {snake_to_camel(name)}Operator
 
     @classmethod
     def make_args(cls, user, kwargs):
         return {{}}
+        
+    @classmethod
+    def args(cls, **kwargs):
+        template = {{
+            "kwargs": [],
+            "query_filter": [],
+            "is_single": kwargs.pop("is_single"),
+            "filter_has_company": kwargs.pop("filter_has_company")
+        }}
+        return cls._args(template, kwargs)
 """
 
     @classmethod
     def gen_operator(cls, name: str):
-        return """from graphqlapiobject import BaseOperator
+        return """from graphqlapiobject import base_operator
 from ...apis.Query_apis import 
 from ...apis.Mutation_apis import 
 from ...schema import 
 
 
-class %sOperator(BaseOperator):
+class %sOperator(base_operator):
     query_api: Type[GraphqlQueryAPi] =   # 查询id
     query_list_api: Type[GraphqlQueryListAPi] =   # 从list中过滤
     query_path: str = "data"

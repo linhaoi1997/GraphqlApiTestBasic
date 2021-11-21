@@ -10,6 +10,8 @@ class MyFaker(object):
     def __init__(self, fake_map=None):
         # 如果要关联到已存在的规则使用fake_map
         self.fake_map = {"phone": "phone_number"}
+        if fake_map:
+            self.fake_map.update(fake_map)
         self.fake = Faker(['zh_CN'])
 
     def add_provider(self, provider: BaseProvider):

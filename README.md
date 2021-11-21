@@ -33,8 +33,8 @@ bash /Applications/Python*/Install\ Certificates.command
 import json
 import logging
 import allure
-from GraphqlApiObject import BaseUser, GraphqlQueryListAPi, pformat
-from Schema.PlatformSchema.platform_schema import Mutation, Query
+from graphqlapiobject import BaseUser, GraphqlQueryListAPi, pformat
+from schema.PlatformSchema.platform_schema import Mutation, Query
 
 
 class QueryUsers(GraphqlQueryListAPi):
@@ -71,8 +71,8 @@ class TestGraphqlQuery:
  ```python
 import allure
 import logging
-from GraphqlApiObject import BaseUser, GraphqlOperationAPi
-from Schema.PlatformSchema.platform_schema import Mutation
+from graphqlapiobject import BaseUser, GraphqlOperationAPi
+from schema.PlatformSchema.platform_schema import Mutation
 
 
 class CreateUser(GraphqlOperationAPi):
@@ -111,8 +111,8 @@ import logging
 import allure
 import pytest
 
-from GraphqlApiObject import BaseUser, GraphqlQueryListAPi
-from Schema.PlatformSchema.platform_schema import Mutation, Query
+from graphqlapiobject import BaseUser, GraphqlQueryListAPi
+from schema.PlatformSchema.platform_schema import Mutation, Query
 
 
 class QueryUsers(GraphqlQueryListAPi):
@@ -146,7 +146,7 @@ class TestGraphqlQuery:
 **5. 根据业务总结有4种接口类型，可以看情况选择继承**
 
 ```python
-from GraphqlApiObject import GraphqlApi, GraphqlOperationAPi, GraphqlQueryAPi, GraphqlQueryListAPi
+from graphqlapiobject import GraphqlApi, GraphqlOperationAPi, GraphqlQueryAPi, GraphqlQueryListAPi
 
 
 class GraphqlApiTest(GraphqlApi): ...  # 没有特殊处理的，可以直接使用发送接口

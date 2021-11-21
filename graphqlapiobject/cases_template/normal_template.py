@@ -6,8 +6,8 @@ import allure
 from assert_methods import return_equal_input
 
 from .. import BaseUser
-from ..BaseOperator import BaseFactory, BaseOperator, BaseQueryOperator
-from ..BaseOperator.base_data import BaseData
+from ..base_operator import BaseFactory, BaseOperator, BaseQueryOperator
+from ..base_operator.base_data import BaseData
 from hamcrest import assert_that, is_in, not_
 
 
