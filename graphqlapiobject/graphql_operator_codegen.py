@@ -48,8 +48,8 @@ class {snake_to_camel(name)}Factory(BaseFactory):
         template = {{
             "kwargs": [],
             "query_filter": [],
-            "is_single": kwargs.pop("is_single"),
-            "filter_has_company": kwargs.pop("filter_has_company")
+            "is_single": kwargs.pop("is_single", True),
+            "filter_has_company": kwargs.pop("filter_has_company", True)
         }}
         return cls._args(template, kwargs)
 """
