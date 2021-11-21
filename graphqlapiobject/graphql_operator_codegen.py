@@ -57,15 +57,11 @@ class {snake_to_camel(name)}Factory(BaseFactory):
     @classmethod
     def gen_operator(cls, name: str):
         return """from graphqlapiobject import base_operator
-from ...apis.Query_apis import 
 from ...apis.Mutation_apis import 
-from ...schema import 
 
 
 class %sOperator(base_operator):
     query_api: Type[GraphqlQueryAPi] =   # 查询id
-    query_list_api: Type[GraphqlQueryListAPi] =   # 从list中过滤
-    query_path: str = "data"
 
     num_attr: List = []  # 用于计算数量的属性 [{"name":"total","path":"jmespath","describe":"拜访客户数"}]
     attr: List = []  # 用于计算其他的属性 [{"name":"status","path":"jmespath","describe":"拜访任务状态"}]
