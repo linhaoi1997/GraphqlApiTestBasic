@@ -18,7 +18,7 @@ from .{name}_query_operator import {snake_to_camel(name)}QueryOperator
 
     @classmethod
     def gen_factory(cls, name: str):
-        return f"""from graphqlapiobject.base_operator import BaseFactory
+        return f"""from graphql_api_object.base_operator import BaseFactory
 from .{name}_operator import {snake_to_camel(name)}Operator
 from ...apis.Mutation_apis import 
 from ...apis.Query_apis import 
@@ -56,7 +56,7 @@ class {snake_to_camel(name)}Factory(BaseFactory):
 
     @classmethod
     def gen_operator(cls, name: str):
-        return """from graphqlapiobject import base_operator
+        return """from graphql_api_object import base_operator
 from ...apis.Mutation_apis import 
 
 
@@ -75,7 +75,7 @@ class %sOperator(base_operator):
 
     @classmethod
     def gen_query_operator(cls, name: str):
-        return f"""from graphqlapiobject import BaseQueryOperator
+        return f"""from graphql_api_object import BaseQueryOperator
 from ...apis.Query_apis import 
 
 

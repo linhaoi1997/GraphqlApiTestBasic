@@ -38,7 +38,7 @@ class {title_api_name}({base_api}):
     @classmethod
     def write_import(cls, module_name, query_or_mutation):
         return '''\
-from graphqlapiobject import graphql_api_object, GraphqlOperationAPi, GraphqlUpdateApi, GraphqlQueryListAPi, GraphqlQueryAPi
+from graphql_api_object import GraphqlApi, GraphqlOperationAPi, GraphqlUpdateApi, GraphqlQueryListAPi, GraphqlQueryAPi
 from ..%s import %s
 
 
