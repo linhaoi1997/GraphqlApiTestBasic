@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "graphql_api_object"
+version = "4.0.2"
+description = "用于测试graphql的接口，依赖于sgqlc"
+authors = ["lin"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+sgqlc = "^13.0"
+pytest = "^6.2.4"
+jmespath = "^0.10.0"
+PyHamcrest = "^2.0.2"
+python-utils = "^2.5.6"
+beeprint = "^2.4.10"
+Faker = "^6.6.0"
+allure-pytest = "^2.8.36"
+assert_methods = "^1.0.2"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+api-codegen = "graphqlapiobject.graphql_api_codegen:main"
+operator-codegen = "graphqlapiobject.graphql_operator_codegen:main"

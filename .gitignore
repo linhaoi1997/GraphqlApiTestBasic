@@ -7,7 +7,7 @@
 test.py
 /venv_new
 .idea/
-pyproject.toml
+#pyproject.toml
 *.env
 *env
 config.py
