@@ -42,7 +42,6 @@ class BaseFactory:
     @classmethod
     def _args(cls, template, kwargs):
         for key, value in kwargs.items():  # 添加额外参数默认create接口修改
-            print(key, value)
             template["kwargs"].append({"key": key, "value": create_num_string(3, value + "_")})
         return template
 
@@ -51,16 +50,17 @@ class BaseFactory:
         return {}
 
     @classmethod
-    def prepare_create_args(cls, user, kwargs: Dict):  # 创建部分
+    def prepare_create_args(cls, user, kwargs: Dict, assert_args=True):  # 创建部分
         # 创建
         logging.info("开始创建资源,参数为:")
         logging.info(kwargs)
         kwargs_ = cls.make_args(user, kwargs)
         kwargs_.update(kwargs)
         all_args = kwargs_.keys()
-        for i in cls.create_args:
-            if i not in all_args:
-                raise AssertionError(f"没有传入 {i} 必填参数")
+        if assert_args:
+            for i in cls.create_args:
+                if i not in all_args:
+                    raise AssertionError(f"没有传入 {i} 必填参数")
         return kwargs_
 
     @classmethod

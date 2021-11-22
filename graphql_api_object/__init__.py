@@ -7,5 +7,5 @@ __all__ = [
     "BaseUser", "BaseUser", "record", "pformat",
     "GraphqlOperationAPi", "GraphqlQueryListAPi", "GraphqlQueryAPi", "GraphqlUpdateApi",
     "BaseFactory", "BaseOperator", "BaseQueryOperator", "IdDictBuilder", "GraphqlQueryListWithoutOffsetAPi",
-    "OperatorGetFromList"
+    "OperatorGetFromList","BaseData"
 ]

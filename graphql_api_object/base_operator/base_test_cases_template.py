@@ -3,10 +3,11 @@ from typing import Type, List, Callable
 
 import pytest
 import allure
-from assert_methods import return_equal_input, query_paging
+from assert_methods import return_equal_input
 
 from .base_factory import BaseFactory
 from .base_query_operator import BaseQueryOperator
+from ..graphql_api_object.special_graphql_api import GraphqlQueryListAPi
 
 from hamcrest import assert_that, is_in, not_
 
@@ -28,7 +29,7 @@ class UpdateCasesTemplate:
             with allure.step("构建参数"):
                 kwargs = {"id": operator.id}
                 create_args = self.create_factory.handle_args_from_instance(data, self.update_args)
-                kwargs.update(self.create_factory.prepare_create_args(user, create_args))
+                kwargs.update(self.create_factory.prepare_create_args(user, create_args, assert_args=False))
             with allure.step("执行更新"):
                 update = operator.update_all(kwargs)
             with allure.step("校验结果"):
@@ -146,19 +147,34 @@ class QueryFilterCasesTemplate:
 
 
 class QueryPagingCasesTemplate:
-    query: Type[BaseQueryOperator]
+    query_api: Type[GraphqlQueryListAPi]
     user: str
     resource: str  # base_data中的属性,用于创建资源
-    company: str = None
 
     @allure.title("执行标准分页用例")
     def test(self, data):
-        company_id = getattr(data, self.company).id if self.company else None
-        query = self.query(getattr(data, self.user), company_id)
-        total = query.query.total_count
+        query_args = self.make_query_args(data)
+        query = self.query_api(getattr(data, self.user))
+        total = query.set("total_count").run(**query_args).result.total_count
         if total < 15:
             create_num = 15 - total
             for i in range(create_num):
                 getattr(data, self.resource)
 
-        assert_that(query.query, query_paging())
+        self.assert_page(query, query_args, total)
+
+    def make_query_args(self, data):
+        return {"filter": {"company": {"id": getattr(data, "company").id}}}
+
+    def assert_page(self, api, query_args, total):
+        ids = []
+        offset = 0
+        flag = True
+        while offset < total and flag:
+            for i in api.query_ids(offset=offset, **query_args).c("data[*].id"):
+                if i in ids:
+                    raise AssertionError(f"重复的id{i}")
+                ids.append(i)
+            offset += 10
+        if flag and len(ids) < total:
+            raise AssertionError(f"得到长度与totalcount不符：{len(ids)} != {total}")
