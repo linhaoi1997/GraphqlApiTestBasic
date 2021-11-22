@@ -42,7 +42,8 @@ class BaseFactory:
     @classmethod
     def _args(cls, template, kwargs):
         for key, value in kwargs.items():  # 添加额外参数默认create接口修改
-            template["kwargs"].append({"key": key, "value": create_num_string(3, value + "_")})
+            template["kwargs"].append(
+                {"key": key, "value": create_num_string(3, value + "_") if isinstance(value, str) else value})
         return template
 
     @classmethod
