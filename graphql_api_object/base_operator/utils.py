@@ -28,3 +28,12 @@ class IdDictBuilder:
     @staticmethod
     def id_dict_list(operators: List[BaseOperator]):
         return [{"id": i.id} for i in operators]
+
+
+def dedupe(items, key=None):
+    seen = set()
+    for item in items:
+        val = item if key is None else key(item)
+        if val not in seen:
+            yield val
+            seen.add(val)

@@ -1,42 +1,14 @@
 import logging
-from typing import Type, Dict, List
+from typing import Type, List
 
 import pytest
 import allure
 from assert_methods import return_equal_input
 
-from .. import BaseUser
-from ..base_operator import BaseFactory, BaseOperator, BaseQueryOperator
+from .. import GraphqlQueryListAPi
+from ..base_operator import BaseOperator, BaseQueryOperator
 from ..base_operator.base_data import BaseData
 from hamcrest import assert_that, is_in, not_
-
-
-class UpdateCasesTemplate:
-    name: str = ""
-    create_factory: Type[BaseFactory]  # 创建工厂
-    operator: BaseOperator  # 要更新的对象
-    update_args: Dict  # 更新的参数
-    data: BaseData  # 数据模版
-    assert_jmespath: List[str or List[str]]  # 校验jmespath
-    users: List[BaseUser] = []
-
-    @pytest.mark.parametrize("user", users)
-    @allure.title(name or "{user}执行标准更新用例")
-    def test_update(self, user):
-        with allure.step("选定执行人"):
-            self.operator.user = user
-        with allure.step("构建参数"):
-            kwargs = {"id": self.operator.id}
-            kwargs.update(self.create_factory.handle_args_from_instance(self.data, self.update_args))
-            kwargs.update(self.create_factory.make_args(user, kwargs))
-        with allure.step("执行更新"):
-            update = self.operator.update_all(kwargs)
-        with allure.step("校验结果"):
-            for detail in self.operator.detail():
-                assert_that(
-                    detail,
-                    return_equal_input(update.variables, self.assert_jmespath)
-                )
 
 
 class CreateCasesTemplate:
@@ -128,3 +100,39 @@ class QueryFilterCasesTemplate:
             with allure.step("校验不应该查询到的值"):
                 for k in not_in_ids:
                     assert_that(k, not_(is_in(ids)))
+
+
+class QueryPagingCasesTemplate:
+    query_api: Type[GraphqlQueryListAPi]
+    user: str
+    resource: str  # base_data中的属性,用于创建资源
+
+    @allure.title("执行标准分页用例")
+    def test(self, data):
+        query_args = self.make_query_args(data)
+        query = self.query_api(getattr(data, self.user))
+        total = query.set("total_count").run(**query_args).result.total_count
+        if total < 15:
+            create_num = 15 - total
+            for i in range(create_num):
+                getattr(data, self.resource)
+
+        self.assert_page(query, query_args, total)
+
+    @staticmethod
+    def make_query_args(data):
+        return {"filter": {"company": {"id": getattr(data, "company").id}}}
+
+    @staticmethod
+    def assert_page(api, query_args, total):
+        ids = []
+        offset = 0
+        flag = True
+        while offset < total and flag:
+            for i in api.query_ids(offset=offset, **query_args).c("data[*].id"):
+                if i in ids:
+                    raise AssertionError(f"重复的id{i}")
+                ids.append(i)
+            offset += 10
+        if flag and len(ids) < total:
+            raise AssertionError(f"得到长度与totalcount不符：{len(ids)} != {total}")

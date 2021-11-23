@@ -3,16 +3,23 @@ from typing import Dict, Type, List
 
 from ..graphql_api_object import GraphqlOperationAPi, GraphqlQueryListAPi, create_num_string
 from .base_operator import BaseOperator
+from .utils import dedupe
 
 
 class BaseFactory:
     # 创建部分
     create_api: Type[GraphqlOperationAPi]  # 创建调用的接口
-    create_args: List[str] = []  # 创建时必填的参数
+    create_args: List[Dict] = [
+        {"attr": "company", "key": "company.id", "func": None}
+    ]  # 创建时必填的参数
 
     # 查询部分
     query_api: Type[GraphqlQueryListAPi]  # 查询的列表接口
-    query_args: List[str] = []  # 查找时必填的filter
+    query_args: List[Dict] = [
+        {"attr": "company", "key": "company", "func": lambda x: {"id": x.id}}
+    ]  # 查找时必填的filter
+
+    default_attr = {"company": "company"}
 
     query_path: str = "data"  # 返回结果中对应的列表路径
     query_field: str  # 路径下对应的查找的值
@@ -20,48 +27,24 @@ class BaseFactory:
     # 返回操作器部分
     operator: Type[BaseOperator]
 
-    def __init__(self, resource_name, user_name: str, **kwargs):
-        args = self.args(**kwargs)
+    def __init__(self, resource_name, user_name: str, is_single=True, **kwargs):
         self.user_name = user_name
         self.name = resource_name
-        self.kwargs = args.get("kwargs", [])
-        self.query_filter = args.get("query_filter", [])
-        self.is_single = args.get("is_single", True)
-        self.filter_has_company = args.get("filter_has_company", True)
-
-    @classmethod
-    def args(cls, **kwargs):
-        template = {
-            "kwargs": kwargs.pop("kwargs", []),
-            "query_filter": kwargs.pop("query_filter", []),
-            "is_single": kwargs.pop("is_single", True),
-            "filter_has_company": kwargs.pop("filter_has_company", True)
-        }
-        return cls._args(template, kwargs)
-
-    @classmethod
-    def _args(cls, template, kwargs):
-        for key, value in kwargs.items():  # 添加额外参数默认create接口修改
-            template["kwargs"].append(
-                {"key": key, "value": create_num_string(3, value + "_") if isinstance(value, str) else value})
-        return template
+        args = list(dedupe(self.create_args + self.query_args, key=lambda x: x["attr"]))
+        self.kwargs = {key: value for key, value in kwargs.items() if key in args}
+        self.kwargs.update(self.default_attr)
+        self.create_fixed_args = {key: create_num_string(3, value) if isinstance(value, str) else value
+                                  for key, value in kwargs.items() if key not in args}
+        self.is_single = is_single
 
     @classmethod
     def make_args(cls, user, kwargs):  # 给复杂参数预留接口
         return {}
 
     @classmethod
-    def prepare_create_args(cls, user, kwargs: Dict, assert_args=True):  # 创建部分
-        # 创建
-        logging.info("开始创建资源,参数为:")
-        logging.info(kwargs)
+    def prepare_create_args(cls, user, kwargs: Dict):  # 创建部分
         kwargs_ = cls.make_args(user, kwargs)
         kwargs_.update(kwargs)
-        all_args = kwargs_.keys()
-        if assert_args:
-            for i in cls.create_args:
-                if i not in all_args:
-                    raise AssertionError(f"没有传入 {i} 必填参数")
         return kwargs_
 
     @classmethod
@@ -128,28 +111,20 @@ class BaseFactory:
         return cls.search_from_result(user, c, query_filter)
 
     @classmethod
-    def handle_args_from_instance(cls, instance, variables):
-        kwargs = {}
-        for arg in variables:  # 对这种形式传入的参数来讲，必是动态参数，从instance中获取
-            if arg.get("value"):  # 如果传了value直接使用
-                value = arg.get("value")
-            elif arg.get("func"):  # 如果没传value，那么去object里面取id，func设置id的格式
-                attr = [getattr(instance, i) for i in arg["attr_name"]] if isinstance(arg["attr_name"], list) else \
-                    getattr(instance, arg["attr_name"])
-                value = arg.get("func")(attr)
-            else:  # 默认的格式
-                value = getattr(instance, arg["attr_name"]).id
-            kwargs[arg["key"]] = value
-        return kwargs
+    def _handle_args(cls, args, handle_args: list):
+        result = {}
+        for i in handle_args:
+            result[i["key"]] = i.get("func")(args[i["attr"]]) if i.get("func") else args[i["attr"]].id
+        return result
 
     def __get__(self, instance, owner):
         if instance is None:
             return self
         else:
-            create_kwargs = self.handle_args_from_instance(instance, self.kwargs)
-            query_filter = self.handle_args_from_instance(instance, self.query_filter)
-            if self.filter_has_company:
-                query_filter["company"] = {"id": instance.company.id}
+            args = {key: getattr(instance, self.kwargs[key]) for key in self.kwargs}  # 从instance中拿到所有值
+            create_kwargs = self._handle_args(args, self.create_args)  # id 参数
+            create_kwargs.update(self.create_fixed_args)  # 固定参数
+            query_filter = self._handle_args(args, self.query_args)
             user = getattr(instance, self.user_name)  # 从object里面获取对应的用户
             if self.is_single:  # 如果是仅创建一次，那么只创建一次，否则每次都创建一个
                 if not instance.__dict__.get(self.name):
