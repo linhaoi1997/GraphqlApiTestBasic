@@ -78,18 +78,19 @@ class BaseFactory:
             cls.query_value_path = ".".join(["input", cls.query_field])
         query_value = create_api.search_from_input("input." + cls.query_value_path)
         if not isinstance(query_value, list):  # 可能一次创建多个对象
-            return cls.operator(user, cls._query_single(q, query_value), create_api.variables, final_filter,
+            return cls.operator(user, cls._query_single(q, query_value, create_api), create_api.variables, final_filter,
                                 cls.query_api, cls.query_path)
         else:
             result = []
             for single_value in query_value:
                 result.append(
-                    cls.operator(user, cls._query_single(q, single_value), create_api.variables, final_filter,
+                    cls.operator(user, cls._query_single(q, single_value, create_api), create_api.variables,
+                                 final_filter,
                                  cls.query_api, cls.query_path))
                 return result
 
     @classmethod
-    def _query_single(cls, query_api, query_value):
+    def _query_single(cls, query_api, query_value, create_api):
         logging.info("开始查询资源")
         expression = f"{cls.query_path}[?{cls.query_field} == '{query_value}'] | [0]"
         info = query_api.c(
