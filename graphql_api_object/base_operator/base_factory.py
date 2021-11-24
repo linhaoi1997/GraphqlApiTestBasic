@@ -4,19 +4,22 @@ from typing import Dict, Type, List
 from ..graphql_api_object import GraphqlOperationAPi, GraphqlQueryListAPi, create_num_string
 from .base_operator import BaseOperator
 from .utils import dedupe
+from collections import namedtuple
+
+Args = namedtuple("Args", ["attr", "key", "func"])
 
 
 class BaseFactory:
     # 创建部分
     create_api: Type[GraphqlOperationAPi]  # 创建调用的接口
-    create_args: List[Dict] = [
-        {"attr": "company", "key": "company.id", "func": None}
+    create_args: List[Args] = [
+        Args(attr="company", key="company.id", func=None)
     ]  # 创建时必填的参数
 
     # 查询部分
     query_api: Type[GraphqlQueryListAPi]  # 查询的列表接口
-    query_args: List[Dict] = [
-        {"attr": "company", "key": "company", "func": lambda x: {"id": x.id}}
+    query_args: List[Args] = [
+        Args(attr="company", key="company", func=lambda x: {"id": x.id}),
     ]  # 查找时必填的filter
 
     default_attr = {"company": "company"}
@@ -30,7 +33,7 @@ class BaseFactory:
     def __init__(self, resource_name, user_name: str, is_single=True, **kwargs):
         self.user_name = user_name
         self.name = resource_name
-        args = list(dedupe(self.create_args + self.query_args, key=lambda x: x["attr"]))
+        args = list(dedupe(self.create_args + self.query_args, key=lambda x: x.attr))
         self.kwargs = {key: value for key, value in kwargs.items() if key in args}
         self.kwargs.update(self.default_attr)
         self.create_fixed_args = {key: create_num_string(3, value) if isinstance(value, str) else value
@@ -112,17 +115,21 @@ class BaseFactory:
         return cls.search_from_result(user, c, query_filter)
 
     @classmethod
-    def _handle_args(cls, args, handle_args: list):
+    def _handle_args(cls, args, handle_args: List[Args]):
         result = {}
         for i in handle_args:
-            result[i["key"]] = i.get("func")(args[i["attr"]]) if i.get("func") else args[i["attr"]].id
+            result[i.key] = i.func(args[i.attr]) if i.func else args[i.attr].id
         return result
 
     def __get__(self, instance, owner):
         if instance is None:
             return self
         else:
-            args = {key: getattr(instance, self.kwargs[key]) for key in self.kwargs}  # 从instance中拿到所有值
+            args = {
+                key: getattr(instance, self.kwargs[key]) if not isinstance(self.kwargs[key], list)
+                else [getattr(instance, i) for i in self.kwargs[key]]
+                for key in self.kwargs
+            }  # 从instance中拿到所有值，并且考虑到列表的情况
             create_kwargs = self._handle_args(args, self.create_args)  # id 参数
             create_kwargs.update(self.create_fixed_args)  # 固定参数
             query_filter = self._handle_args(args, self.query_args)

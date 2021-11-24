@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "graphql_api_object"
-version = "4.0.3"
+version = "4.0.5"
 description = "用于测试graphql的接口，依赖于sgqlc"
 authors = ["lin"]
 
