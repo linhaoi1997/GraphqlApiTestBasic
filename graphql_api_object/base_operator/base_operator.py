@@ -95,7 +95,7 @@ class BaseOperator:
     def update_part(self, kwargs):
         kwargs["id"] = self.id
         return self.update_api(self.user).run(
-            {"input": kwargs}
+            **{"input": kwargs}
         )
 
     def delete(self):
