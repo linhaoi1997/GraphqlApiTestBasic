@@ -34,8 +34,8 @@ class BaseFactory:
         self.user_name = user_name
         self.name = resource_name
         args = list(dedupe(self.create_args + self.query_args, key=lambda x: x.attr))
-        self.kwargs = {key: value for key, value in kwargs.items() if key in args}
-        self.kwargs.update(self.default_attr)
+        self.kwargs = self.default_attr.copy()
+        self.kwargs.update({key: value for key, value in kwargs.items() if key in args})
         self.create_fixed_args = {key: create_num_string(3, value) if isinstance(value, str) else value
                                   for key, value in kwargs.items() if key not in args}
         self.is_single = is_single

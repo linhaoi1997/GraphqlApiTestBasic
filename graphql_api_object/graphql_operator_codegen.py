@@ -18,7 +18,7 @@ from .{name}_query_operator import {snake_to_camel(name)}QueryOperator
 
     @classmethod
     def gen_factory(cls, name: str):
-        return f"""from graphql_api_object.base_operator import BaseFactory
+        return f"""from graphql_api_object.base_operator import BaseFactory,Args
 from .{name}_operator import {snake_to_camel(name)}Operator
 from ...apis.Mutation_apis import 
 from ...apis.Query_apis import 
@@ -27,11 +27,13 @@ from ...apis.Query_apis import
 class {snake_to_camel(name)}Factory(BaseFactory):
     # 创建部分
     create_api: Type[GraphqlOperationAPi] =  # 创建调用的接口
-    create_args: List[str] =   # 创建时必填的参数
+    create_args: List[Args] =   # 创建时必填的参数
 
     # 查询部分
     query_api: Type[GraphqlQueryListAPi] =  # 查询的列表接口
-    query_args: List[str] =   # 查找时必填的filter
+    query_args: List[Args] =   # 查找时必填的filter
+    
+    default_attr = {"company": "company"}
 
     query_path: str = "data"  # 返回结果中对应的列表路径
     query_field: str =   # 路径下对应的查找的值
@@ -39,19 +41,6 @@ class {snake_to_camel(name)}Factory(BaseFactory):
     # 返回操作器部分
     operator: Type[base_operator] = {snake_to_camel(name)}Operator
 
-    @classmethod
-    def make_args(cls, user, kwargs):
-        return {{}}
-        
-    @classmethod
-    def args(cls, **kwargs):
-        template = {{
-            "kwargs": [],
-            "query_filter": [],
-            "is_single": kwargs.pop("is_single", True),
-            "filter_has_company": kwargs.pop("filter_has_company", True)
-        }}
-        return cls._args(template, kwargs)
 """
 
     @classmethod
