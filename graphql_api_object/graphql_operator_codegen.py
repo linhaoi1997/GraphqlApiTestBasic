@@ -33,7 +33,7 @@ class {snake_to_camel(name)}Factory(BaseFactory):
     query_api: Type[GraphqlQueryListAPi] =  # 查询的列表接口
     query_args: List[Args] =   # 查找时必填的filter
     
-    default_attr = {"company": "company"}
+    default_attr = {{"company": "company"}}
 
     query_path: str = "data"  # 返回结果中对应的列表路径
     query_field: str =   # 路径下对应的查找的值

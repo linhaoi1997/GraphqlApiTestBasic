@@ -23,5 +23,5 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-api-codegen = "graphqlapiobject.graphql_api_codegen:main"
-operator-codegen = "graphqlapiobject.graphql_operator_codegen:main"
+api-codegen = "graphql_api_object.graphql_api_codegen:main"
+operator-codegen = "graphql_api_object.graphql_operator_codegen:main"
