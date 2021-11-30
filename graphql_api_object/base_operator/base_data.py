@@ -13,6 +13,9 @@ class BaseData:
     def setup(self):
         pass
 
-    def create_all_resource(self):
+    def create_all_resource(self, exclude=None):
+        if exclude is None:
+            exclude = []
         for i in dir(self):
-            logging.info(getattr(self, i))
+            if i not in exclude:
+                logging.info(getattr(self, i))

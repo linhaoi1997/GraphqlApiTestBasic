@@ -36,8 +36,9 @@ class BaseFactory:
         args = list(dedupe(self.create_args + self.query_args, key=lambda x: x.attr))
         self.kwargs = self.default_attr.copy()
         self.kwargs.update({key: value for key, value in kwargs.items() if key in args})
-        self.create_fixed_args = {key: create_num_string(3, value) if isinstance(value, str) else value
-                                  for key, value in kwargs.items() if key not in args}
+        self.create_fixed_args = {
+            key: create_num_string(3, value) if isinstance(value, str) and value.isupper() else value
+            for key, value in kwargs.items() if key not in args}
         self.is_single = is_single
 
     @classmethod

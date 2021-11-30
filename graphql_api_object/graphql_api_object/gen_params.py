@@ -61,7 +61,10 @@ class ChangeParamsByPath:
         path, index = cls._handle_path(paths[0])
         if len(paths) == 1 and obj.get(path, "EOF") != "EOF":  # 迭代终止条件,目标值可能为None，所以自己定义一个值
             if index is None:
-                obj[path] = value
+                if value == "None":
+                    obj.pop(path)
+                else:
+                    obj[path] = value
             else:
                 if index == "*":
                     if isinstance(value, list):  # 想更换的参数也是列表
