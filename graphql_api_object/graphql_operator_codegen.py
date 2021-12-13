@@ -26,20 +26,20 @@ from ...apis.Query_apis import
 
 class {snake_to_camel(name)}Factory(BaseFactory):
     # 创建部分
-    create_api: Type[GraphqlOperationAPi] =  # 创建调用的接口
-    create_args: List[Args] =   # 创建时必填的参数
+    create_api =  # 创建调用的接口
+    create_args =   # 创建时必填的参数
 
     # 查询部分
-    query_api: Type[GraphqlQueryListAPi] =  # 查询的列表接口
-    query_args: List[Args] =   # 查找时必填的filter
+    query_api =  # 查询的列表接口
+    query_args =   # 查找时必填的filter
     
     default_attr = {{"company": "company"}}
 
-    query_path: str = "data"  # 返回结果中对应的列表路径
-    query_field: str =   # 路径下对应的查找的值
-    query_value_path: str or None =  # 查找的值等于什么，这个是路径，从create的参数中jmespath搜索
+    query_path = "data"  # 返回结果中对应的列表路径
+    query_field =   # 路径下对应的查找的值
+    query_value_path =  # 查找的值等于什么，这个是路径，从create的参数中jmespath搜索
     # 返回操作器部分
-    operator: Type[base_operator] = {snake_to_camel(name)}Operator
+    operator = {snake_to_camel(name)}Operator
 
 """
 
@@ -50,10 +50,10 @@ from ...apis.Mutation_apis import
 
 
 class %sOperator(BaseOperator):
-    query_api: Type[GraphqlQueryAPi] =   # 查询id
+    query_api =   # 查询id
 
-    num_attr: List = []  # 用于计算数量的属性 [{"name":"total","path":"jmespath","describe":"拜访客户数"}]
-    attr: List = []  # 用于计算其他的属性 [{"name":"status","path":"jmespath","describe":"拜访任务状态"}]
+    num_attr = []  # 用于计算数量的属性 [{"name":"total","path":"jmespath","describe":"拜访客户数"}]
+    attr = []  # 用于计算其他的属性 [{"name":"status","path":"jmespath","describe":"拜访任务状态"}]
     
     update_api = 
     delete_api = 
@@ -69,9 +69,9 @@ from ...apis.Query_apis import
 
 
 class %sQueryOperator(BaseQueryOperator):
-    query_api : Type[GraphqlQueryListAPi] = 
-    base_filter: Dict = 
-    filter_has_company: bool = True
+    query_api = 
+    base_filter = 
+    filter_has_company = True
 
 """ % snake_to_camel(name)
 
