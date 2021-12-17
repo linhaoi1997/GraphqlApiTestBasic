@@ -25,11 +25,23 @@ class BaseOperator:
         self._query = self.query_api(self.user) if self.query_api else None
         self.attr.extend(self.num_attr)
 
+    def details(self):
+        detail = self.detail
+        detail_from_list = self.detail_from_list
+        if detail:
+            yield self.detail
+        if detail_from_list:
+            yield self.detail_from_list
+
+    @property
     def detail(self):
         if self.query_api:
             logging.info("查询单接口")
-            yield self._query.query_full(self.id).c()
-        logging.info("查询列表接口")
+            return self._query.query_full(self.id).c()
+
+    @property
+    def detail_from_list(self):
+        logging.info("查询接口列表")
         result = self._query_list.set_filter(**self.query_filter).query_full().c(
             f"{self.query_path}[?id == '{self.id}'] | [0]"
         )
@@ -38,23 +50,28 @@ class BaseOperator:
             logging.info(f"jmespath: {self.query_path}[?id == '{self.id}'] | [0]")
             raise AssertionError("not found id")
         else:
-            yield result
+            return result
+
+    @property
+    def ids_from_list(self):
+        return self._query_list.set_filter(**self.query_filter).query_ids(limit=100).ids
 
     @staticmethod
     def _return_detail(details: list):
         if len(details) > 1:
             if not details[0] == details[1]:
                 raise AssertionError(f"列表和detail查询结果不一致: \n1. {details[0]}\n2. {details[1]}")
-        else:
-            return details[0]
+        return details[0]
 
     def __getitem__(self, item):
-        details = [i[item] for i in list(self.detail())]
+        details = [i[item] for i in list(self.details())]
+        logging.info(details)
         return self._return_detail(details)
 
     def all_nums_attr(self):
-        details = list(self.detail())
+        details = list(self.details())
         result = {}
+        logging.info(details)
         for i in self.num_attr:
             result[i["name"]] = self._return_detail([j[i["name"]] for j in details])
         return result
@@ -72,10 +89,10 @@ class BaseOperator:
             name = i["name"]
             change_way = i["change_way"]
             change_num = i["change_num"]
-            if i[change_way] == "increase":
-                assert_that(old_nums[i[name]] + i[change_num], equal_to(new_nums[i[name]]))
-            elif i[change_way] == "decrease":
-                assert_that(old_nums[i[name]] - i[change_num], equal_to(new_nums[i[name]]))
+            if change_way == "increase":
+                assert_that(old_nums[name] + change_num, equal_to(new_nums[name]))
+            elif change_way == "decrease":
+                assert_that(old_nums[name] - change_num, equal_to(new_nums[change_way]))
             else:
                 raise AssertionError(f"unknown change way: {change_way}")
 

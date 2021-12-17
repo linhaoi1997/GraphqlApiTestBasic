@@ -37,7 +37,7 @@ class BaseFactory:
         self.kwargs = self.default_attr.copy()
         self.kwargs.update({key: value for key, value in kwargs.items() if key in args})
         self.create_fixed_args = {
-            key: create_num_string(3, value) if isinstance(value, str) and value.isupper() else value
+            key: create_num_string(5, value) if isinstance(value, str) and value.islower() else value
             for key, value in kwargs.items() if key not in args}
         self.is_single = is_single
 
@@ -86,12 +86,13 @@ class BaseFactory:
                                 cls.query_api, cls.query_path)
         else:
             result = []
+            logging.info(query_value)
             for single_value in query_value:
                 result.append(
                     cls.operator(user, cls._query_single(q, single_value, create_api), create_api.variables,
                                  final_filter,
                                  cls.query_api, cls.query_path))
-                return result
+            return result
 
     @classmethod
     def _query_single(cls, query_api, query_value, create_api):

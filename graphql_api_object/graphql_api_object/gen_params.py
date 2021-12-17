@@ -59,6 +59,8 @@ class ChangeParamsByPath:
     @classmethod
     def _change(cls, obj: dict, paths: List[str], value: Any):
         path, index = cls._handle_path(paths[0])
+        if not isinstance(obj, dict):
+            return
         if len(paths) == 1 and obj.get(path, "EOF") != "EOF":  # 迭代终止条件,目标值可能为None，所以自己定义一个值
             if index is None:
                 if value == "None":
